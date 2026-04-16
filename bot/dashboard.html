@@ -442,6 +442,9 @@ loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(
 loadingMsg.textContent = 'Loading data...';
 document.body.appendChild(loadingMsg);
 
+// DOM element references (initialized on page load)
+let monthSelect, providerList, providerBtn;
+
 // ===================== CSV PARSER =====================
 function parseCSV(text) {
   const lines = [];
@@ -541,7 +544,9 @@ function initializeFilters() {
   allProviders = [...new Set(chargingSessions.map(s => s.provider))].sort();
   allMonths = [...new Set([...chargingSessions.map(s => s.monthKey),...otherExpenses.map(e => e.monthKey)])].filter(Boolean).sort();
 
-  const monthSelect = document.getElementById('filterMonth');
+  monthSelect = document.getElementById('filterMonth');
+  providerList = document.getElementById('providerList');
+  providerBtn = document.getElementById('providerBtn');
   monthSelect.innerHTML = '<option value="all">All Time</option>';
   allMonths.forEach(m => {
     const [y, mo] = m.split('-');
@@ -550,15 +555,12 @@ function initializeFilters() {
     monthSelect.appendChild(opt);
   });
 
-  const providerList = document.getElementById('providerList');
   providerList.innerHTML = '';
   allProviders.forEach(p => {
     const lbl = document.createElement('label');
     lbl.innerHTML = `<input type="checkbox" value="${p}" checked> ${p}`;
     providerList.appendChild(lbl);
   });
-
-  const providerBtn = document.getElementById('providerBtn');
   if (!providerBtn._listenerAdded) {
     providerBtn.addEventListener('click', e => { e.stopPropagation(); document.getElementById('providerList').classList.toggle('open'); });
     document.addEventListener('click', () => document.getElementById('providerList').classList.remove('open'));
