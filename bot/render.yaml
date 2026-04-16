@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: ev-insights-bot
+    runtime: docker
+    dockerfilePath: ./bot/Dockerfile
+    dockerContext: ./bot
+    plan: free
+    envVars:
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: CHAT_ID
+        sync: false
+      - key: CSV_URL
+        value: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSwMAeGbr71UIP91NTDY_-NNnsKrFiEEGC6vFspwBBFqgbLdkzDwCZLVLEheLoJJlcO-1cDdiyuu5_t/pub?output=csv"
+      - key: WEEKLY_DAY
+        value: "mon"
+      - key: WEEKLY_HOUR
+        value: "9"
+      - key: PORT
+        value: "10000"

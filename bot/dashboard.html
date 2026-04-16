@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EV Insights Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cyan:#00D4FF;--cyan-dim:rgba(0,212,255,0.15);--cyan-glow:rgba(0,212,255,0.08);
+  --amber:#FFB020;--amber-dim:rgba(255,176,32,0.15);
+  --green:#34D399;--green-dim:rgba(52,211,153,0.15);
+  --coral:#FF6B6B;--coral-dim:rgba(255,107,107,0.15);
+  --purple:#A78BFA;
+  --bg-deep:#0B0F1A;--bg-surface:#111827;--bg-card:rgba(17,24,39,0.7);
+  --bg-elevated:rgba(30,41,59,0.5);
+  --text:#F1F5F9;--text2:#94A3B8;--text3:#64748B;
+  --border:rgba(148,163,184,0.08);--border-hover:rgba(0,212,255,0.2);
+  --glass:rgba(255,255,255,0.03);
+  --shadow:0 4px 24px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.2);
+  --shadow-glow:0 0 40px rgba(0,212,255,0.06);
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{
+  font-family:'Outfit',sans-serif;
+  background:var(--bg-deep);
+  color:var(--text);
+  line-height:1.5;
+  padding-bottom:60px;
+  min-height:100vh;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 10% 10%, rgba(0,212,255,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 80%, rgba(255,176,32,0.03) 0%, transparent 60%);
+}
+/* Noise texture overlay */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  opacity:0.3;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+.container{max-width:1320px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+
+/* ─── Header ─── */
+.dashboard-header{padding:36px 0 12px;position:relative;z-index:1}
+.dashboard-header h1{
+  font-size:1.75rem;font-weight:800;letter-spacing:-0.5px;
+  background:linear-gradient(135deg,var(--cyan) 0%,#60A5FA 50%,var(--purple) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  display:inline-block;
+}
+.dashboard-header p{font-size:0.82rem;color:var(--text3);margin-top:2px;font-weight:400;letter-spacing:0.3px}
+.header-line{
+  width:60px;height:2px;margin-top:12px;
+  background:linear-gradient(90deg,var(--cyan),transparent);
+  border-radius:2px;
+}
+
+/* ─── Filter Bar ─── */
+.filter-bar{
+  position:sticky;top:0;z-index:100;padding:12px 0;
+  background:rgba(11,15,26,0.85);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.filter-inner{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.filter-group{display:flex;flex-direction:column;gap:3px}
+.filter-group label{
+  font-size:0.62rem;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:1.2px;
+}
+.filter-group select,.filter-group input,.checkbox-dropdown-btn{
+  font-family:'Outfit',sans-serif;font-size:0.8rem;font-weight:500;
+  padding:7px 12px;
+  border:1px solid var(--border);border-radius:8px;
+  background:var(--bg-elevated);color:var(--text);
+  outline:none;min-width:110px;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  appearance:none;-webkit-appearance:none;
+  cursor:pointer;
+}
+.filter-group select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+  padding-right:28px;
+}
+.filter-group select:focus,.filter-group input:focus,.checkbox-dropdown-btn:focus{
+  border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,255,0.12);
+}
+.filter-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--cyan-dim);color:var(--cyan);
+  font-size:0.68rem;font-weight:600;padding:4px 10px;border-radius:20px;
+  letter-spacing:0.3px;
+}
+.filter-clear{
+  font-size:0.72rem;color:var(--cyan);cursor:pointer;
+  background:none;border:none;font-family:'Outfit',sans-serif;font-weight:500;
+  opacity:0.8;transition:opacity 0.2s;
+}
+.filter-clear:hover{opacity:1;text-decoration:underline}
+.filter-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.checkbox-dropdown{position:relative}
+.checkbox-dropdown-btn{text-align:left;min-width:130px}
+.checkbox-dropdown-list{
+  display:none;position:absolute;top:calc(100% + 4px);left:0;
+  background:var(--bg-surface);
+  border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  padding:6px 0;z-index:200;min-width:180px;max-height:220px;overflow-y:auto;
+  backdrop-filter:blur(12px);
+}
+.checkbox-dropdown-list.open{display:block}
+.checkbox-dropdown-list label{
+  display:flex;align-items:center;gap:8px;padding:6px 14px;
+  font-size:0.78rem;cursor:pointer;white-space:nowrap;
+  color:var(--text2);transition:background 0.15s,color 0.15s;
+}
+.checkbox-dropdown-list label:hover{background:var(--bg-elevated);color:var(--text)}
+.checkbox-dropdown-list input[type=checkbox]{accent-color:var(--cyan)}
+
+/* ─── Grid ─── */
+.zone-grid{display:grid;grid-template-columns:1fr;gap:24px;margin-top:20px}
+.zone-row-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:768px){.zone-row-2{grid-template-columns:1fr}}
+
+/* ─── Reveal animation ─── */
+.reveal{opacity:0;transform:translateY(16px);animation:revealUp 0.5s ease forwards}
+@keyframes revealUp{to{opacity:1;transform:translateY(0)}}
+
+/* ─── Cards ─── */
+.card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  padding:20px;
+  overflow:hidden;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:border-color 0.3s,box-shadow 0.3s;
+  position:relative;
+}
+.card::before{
+  content:'';position:absolute;inset:0;border-radius:16px;
+  background:linear-gradient(135deg,rgba(0,212,255,0.02) 0%,transparent 50%);
+  pointer-events:none;
+}
+.card:hover{border-color:var(--border-hover);box-shadow:var(--shadow),var(--shadow-glow)}
+.card h2{
+  font-size:0.72rem;font-weight:600;color:var(--text3);
+  margin-bottom:16px;text-transform:uppercase;letter-spacing:1.5px;
+  display:flex;align-items:center;gap:8px;
+}
+.card h2::before{
+  content:'';width:3px;height:14px;border-radius:2px;
+  background:var(--cyan);display:inline-block;flex-shrink:0;
+}
+
+/* ─── KPI Strip ─── */
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+@media(max-width:900px){.kpi-strip{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:560px){.kpi-strip{grid-template-columns:repeat(2,1fr)}}
+.kpi-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow:var(--shadow);
+  padding:18px 16px;
+  text-align:center;
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:border-color 0.3s,transform 0.2s;
+}
+.kpi-card:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+.kpi-card::after{
+  content:'';position:absolute;bottom:0;left:20%;right:20%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan-dim),transparent);
+}
+.kpi-label{
+  font-size:0.65rem;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:1px;
+}
+.kpi-value{
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.65rem;font-weight:600;
+  color:var(--text);
+  margin:8px 0 6px;
+  letter-spacing:-0.5px;
+}
+.kpi-delta{font-size:0.68rem;font-weight:500;padding:3px 10px;border-radius:20px;display:inline-block;letter-spacing:0.2px}
+.kpi-delta.up{background:var(--green-dim);color:var(--green)}
+.kpi-delta.down{background:var(--amber-dim);color:var(--amber)}
+.kpi-delta.neutral{background:var(--bg-elevated);color:var(--text3)}
+
+/* ─── Chart containers ─── */
+.chart-wrap{position:relative;width:100%}
+.chart-wrap.h300{height:300px}
+.chart-wrap.h350{height:350px}
+.chart-wrap.h400{height:400px}
+
+/* ─── Heatmap ─── */
+.heatmap-grid{display:grid;gap:2px;font-size:0.65rem}
+.heatmap-cell{
+  border-radius:4px;display:flex;align-items:center;justify-content:center;
+  aspect-ratio:1;min-width:16px;
+  font-family:'JetBrains Mono',monospace;font-size:0.58rem;
+  color:var(--text3);transition:transform 0.15s;
+}
+.heatmap-cell:hover{transform:scale(1.2);z-index:1}
+.heatmap-header{font-weight:600;color:var(--text3);font-size:0.58rem;display:flex;align-items:center;justify-content:center}
+.heatmap-row-label{font-weight:600;color:var(--text3);font-size:0.62rem;display:flex;align-items:center;justify-content:flex-end;padding-right:6px}
+.heatmap-total{
+  font-family:'JetBrains Mono',monospace;
+  font-weight:600;color:var(--text2);font-size:0.6rem;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg-elevated);border-radius:4px;
+}
+
+/* ─── Table ─── */
+.table-controls{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.table-controls input{
+  font-family:'Outfit',sans-serif;font-size:0.8rem;font-weight:500;
+  padding:7px 14px;
+  border:1px solid var(--border);border-radius:8px;
+  background:var(--bg-elevated);color:var(--text);
+  flex:1;max-width:280px;outline:none;
+  transition:border-color 0.2s;
+}
+.table-controls input:focus{border-color:var(--cyan)}
+.table-controls input::placeholder{color:var(--text3)}
+.table-controls select{
+  font-family:'Outfit',sans-serif;font-size:0.8rem;font-weight:500;
+  padding:7px 12px;
+  border:1px solid var(--border);border-radius:8px;
+  background:var(--bg-elevated);color:var(--text);
+  appearance:none;-webkit-appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+  padding-right:28px;
+}
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+table.data-table{width:100%;border-collapse:collapse;font-size:0.75rem}
+table.data-table th{
+  background:var(--bg-elevated);
+  font-weight:600;color:var(--text3);text-align:left;
+  padding:10px 8px;cursor:pointer;white-space:nowrap;
+  border-bottom:1px solid var(--border);user-select:none;
+  font-size:0.68rem;text-transform:uppercase;letter-spacing:0.8px;
+  transition:color 0.2s;
+}
+table.data-table th:hover{color:var(--cyan)}
+table.data-table th .sort-arrow{font-size:0.55rem;margin-left:3px;color:var(--cyan)}
+table.data-table td{
+  padding:8px;border-bottom:1px solid var(--border);white-space:nowrap;
+  font-family:'JetBrains Mono',monospace;font-size:0.72rem;
+  color:var(--text2);
+}
+table.data-table tr{transition:background 0.2s}
+table.data-table tr:hover{background:var(--bg-elevated)}
+table.data-table tr.idle-highlight{background:rgba(255,176,32,0.06)}
+table.data-table tr.idle-highlight:hover{background:rgba(255,176,32,0.1)}
+table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;transition:background 0.3s}
+.pagination{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:0.78rem;color:var(--text3)}
+.pagination button{
+  font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:500;
+  padding:5px 12px;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg-elevated);cursor:pointer;color:var(--text2);
+  transition:all 0.2s;
+}
+.pagination button:disabled{opacity:0.3;cursor:default}
+.pagination button:hover:not(:disabled){background:var(--cyan-dim);border-color:var(--border-hover);color:var(--cyan)}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--text3);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text2)}
+
+/* ─── Responsive ─── */
+@media(max-width:768px){
+  .filter-inner{gap:8px}
+  .filter-group select,.filter-group input,.checkbox-dropdown-btn{min-width:80px;font-size:0.75rem;padding:6px 10px}
+  .kpi-value{font-size:1.2rem}
+  .container{padding:0 14px}
+  .dashboard-header h1{font-size:1.35rem}
+  .card{padding:14px;border-radius:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="dashboard-header">
+    <h1>EV Insights</h1>
+    <p>Charging analytics & expense tracking</p>
+    <div class="header-line"></div>
+  </div>
+</div>
+
+<!-- ZONE 1: Filter Bar -->
+<div class="filter-bar">
+  <div class="container">
+    <div class="filter-inner">
+      <div class="filter-group">
+        <label>Period</label>
+        <select id="filterMonth"><option value="all">All Time</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Country</label>
+        <select id="filterCountry">
+          <option value="all">All</option>
+          <option value="Singapore">Singapore</option>
+          <option value="Malaysia">Malaysia</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Type</label>
+        <select id="filterType">
+          <option value="all">All</option>
+          <option value="AC">AC</option>
+          <option value="DC">DC</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Provider</label>
+        <div class="checkbox-dropdown" id="providerDropdown">
+          <button class="checkbox-dropdown-btn" id="providerBtn">All Providers</button>
+          <div class="checkbox-dropdown-list" id="providerList"></div>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Paid By</label>
+        <select id="filterPaidBy">
+          <option value="all">All</option>
+          <option value="Zeya & Atiqah">Zeya & Atiqah</option>
+          <option value="Atiqah">Atiqah</option>
+        </select>
+      </div>
+      <div class="filter-right">
+        <span class="filter-badge" id="filterBadge" style="display:none"><span id="filterCount">0</span> active</span>
+        <button class="filter-clear" id="filterClear" style="display:none" onclick="clearFilters()">Clear all</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="zone-grid">
+
+    <!-- ZONE 2: KPI Strip -->
+    <div class="kpi-strip" id="kpiStrip">
+      <div class="kpi-card reveal" style="animation-delay:0.05s"><div class="kpi-label">Total Spend (SGD)</div><div class="kpi-value" id="kpiSpend">--</div><div class="kpi-delta neutral" id="kpiSpendDelta">--</div></div>
+      <div class="kpi-card reveal" style="animation-delay:0.1s"><div class="kpi-label">Total kWh Charged</div><div class="kpi-value" id="kpiKwh">--</div><div class="kpi-delta neutral" id="kpiKwhDelta">--</div></div>
+      <div class="kpi-card reveal" style="animation-delay:0.15s"><div class="kpi-label">Charging Sessions</div><div class="kpi-value" id="kpiSessions">--</div><div class="kpi-delta neutral" id="kpiSessionsDelta">--</div></div>
+      <div class="kpi-card reveal" style="animation-delay:0.2s"><div class="kpi-label">Avg Cost/kWh (SGD)</div><div class="kpi-value" id="kpiCostKwh">--</div><div class="kpi-delta neutral" id="kpiCostKwhDelta">--</div></div>
+      <div class="kpi-card reveal" style="animation-delay:0.25s"><div class="kpi-label">Est. Distance (km)</div><div class="kpi-value" id="kpiDist">--</div><div class="kpi-delta neutral" id="kpiDistDelta">--</div></div>
+    </div>
+
+    <!-- ZONE 3: Cost Over Time -->
+    <div class="card reveal" style="animation-delay:0.3s">
+      <h2>Cost Over Time</h2>
+      <div class="chart-wrap h350"><canvas id="chartCostTime"></canvas></div>
+    </div>
+
+    <!-- ZONE 4: Provider + Type -->
+    <div class="zone-row-2">
+      <div class="card reveal" style="animation-delay:0.35s">
+        <h2>Spend by Provider</h2>
+        <div class="chart-wrap h300"><canvas id="chartProvider"></canvas></div>
+      </div>
+      <div class="card reveal" style="animation-delay:0.4s">
+        <h2>Sessions by Type</h2>
+        <div class="chart-wrap h300"><canvas id="chartType"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ZONE 5: Charging Efficiency -->
+    <div class="card reveal" style="animation-delay:0.45s">
+      <h2>Charging Efficiency</h2>
+      <div class="chart-wrap h400"><canvas id="chartEfficiency"></canvas></div>
+    </div>
+
+    <!-- ZONE 6: Battery Behaviour -->
+    <div class="card reveal" style="animation-delay:0.5s">
+      <h2>Battery Behaviour</h2>
+      <div class="chart-wrap h350"><canvas id="chartBattery"></canvas></div>
+    </div>
+
+    <!-- ZONE 7: Heatmap + Other Expenses -->
+    <div class="zone-row-2">
+      <div class="card reveal" style="animation-delay:0.55s">
+        <h2>Session Heatmap</h2>
+        <div id="heatmapContainer" style="overflow-x:auto"></div>
+      </div>
+      <div class="card reveal" style="animation-delay:0.6s">
+        <h2>Other Expenses</h2>
+        <div class="chart-wrap h300"><canvas id="chartExpenses"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ZONE 8: Session Log Table -->
+    <div class="card reveal" style="animation-delay:0.65s">
+      <h2>Session Log</h2>
+      <div class="table-controls">
+        <input type="text" id="tableSearch" placeholder="Search location or provider...">
+        <select id="tablePageSize">
+          <option value="10">10 rows</option>
+          <option value="25">25 rows</option>
+          <option value="50">50 rows</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table" id="sessionTable">
+          <thead><tr id="tableHead"></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="tablePagination"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ===================== CONFIG =====================
+const CSV_URL = '/api/data';  // Server-side API endpoint (no CORS issues)
+const MYR_TO_SGD = 1 / 3.14;
+
+// Global data arrays
+let chargingSessions = [];
+let otherExpenses = [];
+let allProviders = [];
+let allMonths = [];
+
+// Loading state
+let dashboardReady = false;
+const loadingMsg = document.createElement('div');
+loadingMsg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#94A3B8;font-family:Outfit;font-size:14px;z-index:999;';
+loadingMsg.textContent = 'Loading data...';
+document.body.appendChild(loadingMsg);
+
+// ===================== CSV PARSER =====================
+function parseCSV(text) {
+  const lines = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if (ch === '\n' && !inQuotes) { lines.push(current); current = ''; continue; }
+    if (ch === '\r' && !inQuotes) continue;
+    current += ch;
+  }
+  if (current.trim()) lines.push(current);
+  const headers = splitCSVLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = splitCSVLine(lines[i]);
+    const obj = {};
+    headers.forEach((h, idx) => obj[h.trim()] = (vals[idx] || '').trim());
+    rows.push(obj);
+  }
+  return rows;
+}
+function splitCSVLine(line) {
+  const result = []; let current = ''; let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if (ch === ',' && !inQuotes) { result.push(current); current = ''; continue; }
+    current += ch;
+  }
+  result.push(current); return result;
+}
+function parseDate(str) {
+  if (!str || !str.trim()) return null;
+  const parts = str.trim().match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);
+  if (!parts) return null;
+  return new Date(+parts[3], +parts[2]-1, +parts[1], +parts[4], +parts[5], +parts[6]);
+}
+function parseNum(v) { if (!v || !v.trim()) return 0; return parseFloat(v.replace(/,/g, '')) || 0; }
+
+// ===================== DATA PROCESSING =====================
+function processData(csvText) {
+  chargingSessions = [];
+  otherExpenses = [];
+  const rawRows = parseCSV(csvText);
+
+  rawRows.forEach(r => {
+    const type = r['What data do you want to record?'];
+    if (type === 'Charging-Related') {
+      const currency = (r['Currency'] || 'SGD').trim();
+      const fx = currency === 'MYR' ? MYR_TO_SGD : 1;
+      const cost = parseNum(r['Charging Cost']) * fx;
+      const rebate = parseNum(r['Rebate, if any']) * fx;
+      const idle = parseNum(r['Idle Fees']) * fx;
+      const startDate = parseDate(r['Charging Start Date & Time']);
+      const endDate = parseDate(r['Charging End Date & Time']);
+      const duration = (startDate && endDate) ? (endDate - startDate) / 60000 : 0;
+      const kwh = parseNum(r['Total kWh Charged']);
+      const netCost = cost - rebate;
+      chargingSessions.push({
+        startDate, endDate, duration,
+        country: (r['Country'] || '').trim(), type: (r['Charging Type'] || '').trim(),
+        location: (r['Charging Location'] || '').trim(),
+        odometer: parseNum(r['Odometer (km) Before Charging']),
+        battBefore: parseNum(r['Battery Percentage Before Charging']),
+        battAfter: parseNum(r['Battery Percentage After Charging']),
+        kwh, provider: (r['Charging Provider'] || '').trim(),
+        plan: (r['Subscription Plan'] || '').trim(),
+        currency, grossCost: cost, rebate, netCost, idleFees: idle,
+        costPerKwh: kwh > 0 ? netCost / kwh : 0,
+        paidBy: (r['Payment By'] || '').trim(),
+        monthKey: startDate ? `${startDate.getFullYear()}-${String(startDate.getMonth()+1).padStart(2,'0')}` : ''
+      });
+    } else if (type === 'Other Expenses') {
+      const expDate = parseDate(r['Expense Date'] + ' 00:00:00');
+      const amt = parseNum(r['Amount Paid (SGD)']);
+      otherExpenses.push({
+        category: (r['Expense Category'] || '').trim(), date: expDate, amount: amt,
+        payMethod: (r['Payment Method'] || '').trim(), paidBy: (r['Paid By'] || '').trim(),
+        monthKey: expDate ? `${expDate.getFullYear()}-${String(expDate.getMonth()+1).padStart(2,'0')}` : ''
+      });
+    }
+  });
+
+  chargingSessions.sort((a, b) => (a.startDate || 0) - (b.startDate || 0));
+  for (let i = 0; i < chargingSessions.length; i++) {
+    if (i === 0) { chargingSessions[i].distance = 0; continue; }
+    const d = chargingSessions[i].odometer - chargingSessions[i-1].odometer;
+    chargingSessions[i].distance = d > 0 ? d : 0;
+  }
+}
+
+// ===================== FILTERS =====================
+function initializeFilters() {
+  allProviders = [...new Set(chargingSessions.map(s => s.provider))].sort();
+  allMonths = [...new Set([...chargingSessions.map(s => s.monthKey),...otherExpenses.map(e => e.monthKey)])].filter(Boolean).sort();
+
+  const monthSelect = document.getElementById('filterMonth');
+  monthSelect.innerHTML = '<option value="all">All Time</option>';
+  allMonths.forEach(m => {
+    const [y, mo] = m.split('-');
+    const opt = document.createElement('option');
+    opt.value = m; opt.textContent = new Date(+y, +mo-1).toLocaleString('en', { month: 'short', year: 'numeric' });
+    monthSelect.appendChild(opt);
+  });
+
+  const providerList = document.getElementById('providerList');
+  providerList.innerHTML = '';
+  allProviders.forEach(p => {
+    const lbl = document.createElement('label');
+    lbl.innerHTML = `<input type="checkbox" value="${p}" checked> ${p}`;
+    providerList.appendChild(lbl);
+  });
+
+  const providerBtn = document.getElementById('providerBtn');
+  if (!providerBtn._listenerAdded) {
+    providerBtn.addEventListener('click', e => { e.stopPropagation(); document.getElementById('providerList').classList.toggle('open'); });
+    document.addEventListener('click', () => document.getElementById('providerList').classList.remove('open'));
+    document.getElementById('providerList').addEventListener('click', e => e.stopPropagation());
+    providerBtn._listenerAdded = true;
+  }
+}
+
+let crossFilterProvider = null;
+let crossFilterType = null;
+
+function getFilters() {
+  const month = monthSelect.value;
+  const country = document.getElementById('filterCountry').value;
+  const ctype = document.getElementById('filterType').value;
+  const paidBy = document.getElementById('filterPaidBy').value;
+  const providerChecks = providerList.querySelectorAll('input[type=checkbox]');
+  const selectedProviders = [...providerChecks].filter(c => c.checked).map(c => c.value);
+  if (selectedProviders.length === allProviders.length) providerBtn.textContent = 'All Providers';
+  else if (selectedProviders.length === 0) providerBtn.textContent = 'None';
+  else if (selectedProviders.length === 1) providerBtn.textContent = selectedProviders[0];
+  else providerBtn.textContent = `${selectedProviders.length} selected`;
+  return { month, country, ctype, paidBy, selectedProviders };
+}
+function filterSessions(f) {
+  return chargingSessions.filter(s => {
+    if (f.month !== 'all' && s.monthKey !== f.month) return false;
+    if (f.country !== 'all' && s.country !== f.country) return false;
+    if (f.ctype !== 'all' && s.type !== f.ctype) return false;
+    if (!f.selectedProviders.includes(s.provider)) return false;
+    if (f.paidBy !== 'all' && s.paidBy !== f.paidBy) return false;
+    return true;
+  });
+}
+function filterExpenses(f) {
+  return otherExpenses.filter(e => {
+    if (f.month !== 'all' && e.monthKey !== f.month) return false;
+    if (f.paidBy !== 'all' && e.paidBy !== f.paidBy) return false;
+    return true;
+  });
+}
+function getPrevMonthKey(mk) {
+  if (mk === 'all') return null;
+  const [y, m] = mk.split('-').map(Number);
+  const pm = m === 1 ? 12 : m - 1, py = m === 1 ? y - 1 : y;
+  return `${py}-${String(pm).padStart(2,'0')}`;
+}
+function updateFilterBadge(f) {
+  let count = 0;
+  if (f.month !== 'all') count++;
+  if (f.country !== 'all') count++;
+  if (f.ctype !== 'all') count++;
+  if (f.paidBy !== 'all') count++;
+  if (f.selectedProviders.length < allProviders.length) count++;
+  const badge = document.getElementById('filterBadge'), clear = document.getElementById('filterClear');
+  if (count > 0) { badge.style.display = ''; clear.style.display = ''; document.getElementById('filterCount').textContent = count; }
+  else { badge.style.display = 'none'; clear.style.display = 'none'; }
+}
+function clearFilters() {
+  monthSelect.value = 'all';
+  document.getElementById('filterCountry').value = 'all';
+  document.getElementById('filterType').value = 'all';
+  document.getElementById('filterPaidBy').value = 'all';
+  providerList.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = true);
+  crossFilterProvider = null; crossFilterType = null; updateAll();
+}
+
+// ===================== CHART CONFIG =====================
+let chartCostTime, chartProvider, chartTypeDonut, chartEfficiency, chartBattery, chartExpenses;
+const chartAnimOpts = { duration: 600, easing: 'easeInOutQuart' };
+
+// Dark theme defaults
+Chart.defaults.color = '#94A3B8';
+Chart.defaults.borderColor = 'rgba(148,163,184,0.08)';
+Chart.defaults.font.family = "'Outfit', sans-serif";
+
+const tooltipOpts = {
+  backgroundColor: 'rgba(17,24,39,0.95)',
+  titleColor: '#F1F5F9',
+  bodyColor: '#CBD5E1',
+  borderColor: 'rgba(0,212,255,0.15)',
+  borderWidth: 1,
+  cornerRadius: 10,
+  padding: 12,
+  titleFont: { family: "'Outfit', sans-serif", size: 12, weight: '600' },
+  bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+  boxPadding: 4,
+  displayColors: true,
+  caretSize: 6,
+};
+
+const legendOpts = {
+  position: 'bottom',
+  labels: {
+    usePointStyle: true, pointStyle: 'circle', padding: 16,
+    font: { family: "'Outfit'", size: 11, weight: '500' },
+    color: '#94A3B8'
+  }
+};
+
+function monthLabel(key) {
+  if (!key) return '';
+  const [y, m] = key.split('-');
+  return new Date(+y, +m-1).toLocaleString('en', { month: 'short', year: 'numeric' });
+}
+
+// ===================== KPI UPDATE =====================
+function updateKPIs(sessions, expenses, filters) {
+  const totalNetCharge = sessions.reduce((s, r) => s + r.netCost, 0);
+  const totalIdle = sessions.reduce((s, r) => s + r.idleFees, 0);
+  const totalExpense = expenses.reduce((s, r) => s + r.amount, 0);
+  const totalSpend = totalNetCharge + totalIdle + totalExpense;
+  const totalKwh = sessions.reduce((s, r) => s + r.kwh, 0);
+  const numSessions = sessions.length;
+  const avgCostKwh = totalKwh > 0 ? totalNetCharge / totalKwh : 0;
+  const totalDist = sessions.reduce((s, r) => s + r.distance, 0);
+
+  document.getElementById('kpiSpend').textContent = '$' + totalSpend.toFixed(2);
+  document.getElementById('kpiKwh').textContent = totalKwh.toFixed(1);
+  document.getElementById('kpiSessions').textContent = numSessions;
+  document.getElementById('kpiCostKwh').textContent = '$' + avgCostKwh.toFixed(2);
+  document.getElementById('kpiDist').textContent = totalDist.toLocaleString();
+
+  const prevKey = filters.month !== 'all' ? getPrevMonthKey(filters.month) : null;
+  if (prevKey) {
+    const pf = { ...filters, month: prevKey };
+    const pS = filterSessions(pf), pE = filterExpenses(pf);
+    const pNC = pS.reduce((s,r)=>s+r.netCost,0), pI = pS.reduce((s,r)=>s+r.idleFees,0), pET = pE.reduce((s,r)=>s+r.amount,0);
+    setDelta('kpiSpendDelta', totalSpend, pNC+pI+pET, true);
+    setDelta('kpiKwhDelta', totalKwh, pS.reduce((s,r)=>s+r.kwh,0), false);
+    setDelta('kpiSessionsDelta', numSessions, pS.length, false);
+    const pAvg = pS.reduce((s,r)=>s+r.kwh,0) > 0 ? pNC/pS.reduce((s,r)=>s+r.kwh,0) : 0;
+    setDelta('kpiCostKwhDelta', avgCostKwh, pAvg, true);
+    setDelta('kpiDistDelta', totalDist, pS.reduce((s,r)=>s+r.distance,0), false);
+  } else {
+    const curMK = allMonths[allMonths.length - 1], prevMK = allMonths.length > 1 ? allMonths[allMonths.length - 2] : null;
+    if (curMK && prevMK) {
+      const cF = {...filters,month:curMK}, pF = {...filters,month:prevMK};
+      const cS = filterSessions(cF), cE = filterExpenses(cF), pS = filterSessions(pF), pE = filterExpenses(pF);
+      const cSpend = cS.reduce((s,r)=>s+r.netCost+r.idleFees,0)+cE.reduce((s,r)=>s+r.amount,0);
+      const pSpend = pS.reduce((s,r)=>s+r.netCost+r.idleFees,0)+pE.reduce((s,r)=>s+r.amount,0);
+      const sfx = 'vs '+monthLabel(prevMK);
+      setDelta('kpiSpendDelta',cSpend,pSpend,true,sfx);
+      setDelta('kpiKwhDelta',cS.reduce((s,r)=>s+r.kwh,0),pS.reduce((s,r)=>s+r.kwh,0),false,sfx);
+      setDelta('kpiSessionsDelta',cS.length,pS.length,false,sfx);
+      const cA=cS.reduce((s,r)=>s+r.kwh,0)>0?cS.reduce((s,r)=>s+r.netCost,0)/cS.reduce((s,r)=>s+r.kwh,0):0;
+      const pA=pS.reduce((s,r)=>s+r.kwh,0)>0?pS.reduce((s,r)=>s+r.netCost,0)/pS.reduce((s,r)=>s+r.kwh,0):0;
+      setDelta('kpiCostKwhDelta',cA,pA,true,sfx);
+      setDelta('kpiDistDelta',cS.reduce((s,r)=>s+r.distance,0),pS.reduce((s,r)=>s+r.distance,0),false,sfx);
+    } else {
+      ['kpiSpendDelta','kpiKwhDelta','kpiSessionsDelta','kpiCostKwhDelta','kpiDistDelta'].forEach(id => {
+        const el=document.getElementById(id); el.textContent='--'; el.className='kpi-delta neutral';
+      });
+    }
+  }
+}
+function setDelta(elId, current, previous, lowerIsBetter, suffix='') {
+  const el = document.getElementById(elId);
+  if (previous===0 && current===0) { el.textContent='--'; el.className='kpi-delta neutral'; return; }
+  if (previous===0) { el.textContent='New'; el.className='kpi-delta neutral'; return; }
+  const pct = ((current-previous)/Math.abs(previous))*100;
+  const arrow = pct>0?'\u2191':pct<0?'\u2193':'';
+  const isGood = lowerIsBetter ? pct<=0 : pct>=0;
+  el.textContent = `${arrow} ${Math.abs(pct).toFixed(0)}% ${suffix}`.trim();
+  el.className = `kpi-delta ${pct===0?'neutral':isGood?'up':'down'}`;
+}
+
+// ===================== ZONE 3: COST OVER TIME =====================
+function updateCostTimeChart(sessions, expenses) {
+  const months = {};
+  sessions.forEach(s => { if (!s.monthKey) return; if (!months[s.monthKey]) months[s.monthKey]={net:0,idle:0,other:0}; months[s.monthKey].net+=s.netCost; months[s.monthKey].idle+=s.idleFees; });
+  expenses.forEach(e => { if (!e.monthKey) return; if (!months[e.monthKey]) months[e.monthKey]={net:0,idle:0,other:0}; months[e.monthKey].other+=e.amount; });
+  const sortedKeys = Object.keys(months).sort();
+  const labels = sortedKeys.map(monthLabel);
+  let cum=0; const cumData = sortedKeys.map(k=>{cum+=months[k].net+months[k].idle+months[k].other;return cum;});
+
+  if (chartCostTime) chartCostTime.destroy();
+  chartCostTime = new Chart(document.getElementById('chartCostTime'), {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Net Charging',data:sortedKeys.map(k=>months[k].net),backgroundColor:'rgba(0,212,255,0.7)',stack:'stack',borderRadius:6,order:2,borderSkipped:false},
+        {label:'Idle Fees',data:sortedKeys.map(k=>months[k].idle),backgroundColor:'rgba(255,176,32,0.7)',stack:'stack',borderRadius:6,order:2,borderSkipped:false},
+        {label:'Other Expenses',data:sortedKeys.map(k=>months[k].other),backgroundColor:'rgba(148,163,184,0.3)',stack:'stack',borderRadius:6,order:2,borderSkipped:false},
+        {label:'Cumulative',data:cumData,type:'line',borderColor:'#34D399',backgroundColor:'transparent',borderWidth:2,pointRadius:4,pointBackgroundColor:'#34D399',pointBorderColor:'#111827',pointBorderWidth:2,yAxisID:'y1',tension:0.4,order:1}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,
+      plugins:{tooltip:{...tooltipOpts,callbacks:{label:ctx=>`${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`}},legend:legendOpts},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:"'Outfit'",size:11}}},
+        y:{beginAtZero:true,title:{display:true,text:'SGD',font:{family:"'Outfit'",size:11}},ticks:{font:{family:"'JetBrains Mono'",size:10}},grid:{color:'rgba(148,163,184,0.06)'}},
+        y1:{position:'right',beginAtZero:true,title:{display:true,text:'Cumulative',font:{family:"'Outfit'",size:11}},ticks:{font:{family:"'JetBrains Mono'",size:10}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ===================== ZONE 4: DONUTS =====================
+const providerColors = ['#00D4FF','#FFB020','#34D399','#FF6B6B','#A78BFA','#38BDF8','#94A3B8'];
+
+function updateProviderDonut(sessions) {
+  const byP = {};
+  sessions.forEach(s => { if(!byP[s.provider]) byP[s.provider]={total:0,sessions:0,kwh:0}; byP[s.provider].total+=s.netCost; byP[s.provider].sessions++; byP[s.provider].kwh+=s.kwh; });
+  const providers = Object.keys(byP).sort((a,b)=>byP[b].total-byP[a].total);
+  const totalNet = sessions.reduce((s,r)=>s+r.netCost,0);
+
+  if (chartProvider) chartProvider.destroy();
+  chartProvider = new Chart(document.getElementById('chartProvider'), {
+    type:'doughnut',
+    data:{labels:providers,datasets:[{data:providers.map(p=>byP[p].total),backgroundColor:providerColors.slice(0,providers.length),borderWidth:0,hoverOffset:8,borderRadius:4}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,cutout:'62%',
+      plugins:{
+        legend:legendOpts,
+        tooltip:{...tooltipOpts,callbacks:{label:ctx=>{const d=byP[ctx.label];return[`$${d.total.toFixed(2)}`,`${d.sessions} sessions`,`${(d.kwh/d.sessions).toFixed(1)} kWh avg`];}}}
+      },
+      onClick:(e,el)=>{if(el.length>0){const i=el[0].index;crossFilterProvider=crossFilterProvider===providers[i]?null:providers[i];crossFilterType=null;updateScatter(filterSessions(getFilters()));}}
+    },
+    plugins:[{id:'centerText',afterDraw(chart){const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.font="500 11px 'Outfit'";ctx.fillStyle='#64748B';ctx.textAlign='center';ctx.fillText('TOTAL',cx,cy-10);ctx.font="600 20px 'JetBrains Mono'";ctx.fillStyle='#F1F5F9';ctx.fillText('$'+totalNet.toFixed(0),cx,cy+14);ctx.restore();}}]
+  });
+}
+
+function updateTypeDonut(sessions) {
+  const byT = {};
+  sessions.forEach(s => { if(!byT[s.type]) byT[s.type]={count:0,kwh:0,cost:0}; byT[s.type].count++; byT[s.type].kwh+=s.kwh; byT[s.type].cost+=s.netCost; });
+  const types = Object.keys(byT);
+  const totalS = sessions.length;
+  const colors = {AC:'#00D4FF',DC:'#FF6B6B'};
+
+  if (chartTypeDonut) chartTypeDonut.destroy();
+  chartTypeDonut = new Chart(document.getElementById('chartType'), {
+    type:'doughnut',
+    data:{labels:types,datasets:[{data:types.map(t=>byT[t].count),backgroundColor:types.map(t=>colors[t]||'#94A3B8'),borderWidth:0,hoverOffset:8,borderRadius:4}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,cutout:'62%',
+      plugins:{
+        legend:legendOpts,
+        tooltip:{...tooltipOpts,callbacks:{label:ctx=>{const d=byT[ctx.label];return[`${d.count} sessions`,`${d.kwh.toFixed(1)} kWh`,`$${(d.cost/d.count).toFixed(2)} avg`];}}}
+      },
+      onClick:(e,el)=>{if(el.length>0){const i=el[0].index;crossFilterType=crossFilterType===types[i]?null:types[i];crossFilterProvider=null;updateScatter(filterSessions(getFilters()));}}
+    },
+    plugins:[{id:'ct2',afterDraw(chart){const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.font="500 11px 'Outfit'";ctx.fillStyle='#64748B';ctx.textAlign='center';ctx.fillText('SESSIONS',cx,cy-10);ctx.font="600 20px 'JetBrains Mono'";ctx.fillStyle='#F1F5F9';ctx.fillText(totalS,cx,cy+14);ctx.restore();}}]
+  });
+}
+
+// ===================== ZONE 5: SCATTER =====================
+function updateScatter(sessions) {
+  let filtered = sessions;
+  if (crossFilterProvider) filtered = filtered.filter(s=>s.provider===crossFilterProvider);
+  if (crossFilterType) filtered = filtered.filter(s=>s.type===crossFilterType);
+  const maxCost = Math.max(...filtered.map(s=>s.netCost),1);
+  const pointData = filtered.map(s=>({x:s.duration,y:s.kwh,r:4+(s.netCost/maxCost)*12,session:s,origIndex:chargingSessions.indexOf(s)}));
+  const acData = pointData.filter(d=>d.session.type==='AC');
+  const dcData = pointData.filter(d=>d.session.type==='DC');
+
+  if (chartEfficiency) chartEfficiency.destroy();
+  chartEfficiency = new Chart(document.getElementById('chartEfficiency'), {
+    type:'bubble',
+    data:{datasets:[
+      {label:'AC',data:acData,backgroundColor:'rgba(0,212,255,0.35)',borderColor:'rgba(0,212,255,0.8)',borderWidth:1.5,hoverBackgroundColor:'rgba(0,212,255,0.6)'},
+      {label:'DC',data:dcData,backgroundColor:'rgba(255,107,107,0.35)',borderColor:'rgba(255,107,107,0.8)',borderWidth:1.5,hoverBackgroundColor:'rgba(255,107,107,0.6)'}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,
+      plugins:{
+        legend:legendOpts,
+        tooltip:{...tooltipOpts,callbacks:{label:ctx=>{const s=ctx.raw.session;const d=s.startDate?s.startDate.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'';return[d,s.location,s.provider,`${s.duration.toFixed(0)} min`,`${s.kwh.toFixed(1)} kWh`,`$${s.netCost.toFixed(2)}`,`$${s.costPerKwh.toFixed(2)}/kWh`];}}}
+      },
+      scales:{
+        x:{title:{display:true,text:'Duration (min)',font:{family:"'Outfit'",size:12}},grid:{color:'rgba(148,163,184,0.06)'},ticks:{font:{family:"'JetBrains Mono'",size:10}}},
+        y:{title:{display:true,text:'Total kWh',font:{family:"'Outfit'",size:12}},grid:{color:'rgba(148,163,184,0.06)'},ticks:{font:{family:"'JetBrains Mono'",size:10}}}
+      },
+      onClick:(e,el)=>{if(el.length>0){const ds=el[0].datasetIndex,idx=el[0].index;highlightTableRow(chartEfficiency.data.datasets[ds].data[idx].origIndex);}}
+    },
+    plugins:[{id:'warnLabels',afterDraw(chart){const{ctx}=chart;chart.data.datasets.forEach((ds,di)=>{ds.data.forEach((pt,pi)=>{if(pt.session.costPerKwh>0.80){const meta=chart.getDatasetMeta(di);const el=meta.data[pi];if(el){ctx.save();ctx.font="11px 'Outfit'";ctx.fillStyle='#FF6B6B';ctx.textAlign='center';ctx.fillText('\u26A0',el.x,el.y-el.options.radius-5);ctx.restore();}}});});}}]
+  });
+}
+
+// ===================== ZONE 6: BATTERY =====================
+function updateBatteryChart(sessions) {
+  const labels = sessions.map(s=>s.startDate?s.startDate.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'');
+  if (chartBattery) chartBattery.destroy();
+  chartBattery = new Chart(document.getElementById('chartBattery'), {
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Before',data:sessions.map(s=>s.battBefore),backgroundColor:'rgba(0,212,255,0.2)',borderColor:'rgba(0,212,255,0.5)',borderWidth:1,borderRadius:4},
+      {label:'After',data:sessions.map(s=>s.battAfter),backgroundColor:'rgba(0,212,255,0.6)',borderColor:'rgba(0,212,255,0.9)',borderWidth:1,borderRadius:4}
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,
+      plugins:{legend:legendOpts,tooltip:{...tooltipOpts,callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y}%`}}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:"'Outfit'",size:10},maxRotation:60}},
+        y:{min:0,max:100,title:{display:true,text:'Battery %',font:{family:"'Outfit'",size:12}},ticks:{font:{family:"'JetBrains Mono'",size:10}},grid:{color:'rgba(148,163,184,0.06)'}}
+      }
+    },
+    plugins:[{id:'thresholdLines',afterDraw(chart){const{ctx,chartArea:{left,right},scales:{y}}=chart;[80,20].forEach((val,i)=>{const yPos=y.getPixelForValue(val);ctx.save();ctx.setLineDash([6,4]);ctx.strokeStyle=i===0?'rgba(52,211,153,0.5)':'rgba(255,107,107,0.5)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(left,yPos);ctx.lineTo(right,yPos);ctx.stroke();ctx.setLineDash([]);ctx.font="500 10px 'Outfit'";ctx.fillStyle=i===0?'#34D399':'#FF6B6B';ctx.textAlign='right';ctx.fillText(i===0?'Upper 80%':'Lower 20%',right-4,yPos-5);ctx.restore();});}}]
+  });
+}
+
+// ===================== ZONE 7: HEATMAP =====================
+function updateHeatmap(sessions) {
+  const grid = Array.from({length:7},()=>Array(24).fill(0));
+  sessions.forEach(s=>{if(!s.startDate)return;grid[s.startDate.getDay()][s.startDate.getHours()]++;});
+  const reordered = [grid[1],grid[2],grid[3],grid[4],grid[5],grid[6],grid[0]];
+  const dayLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const maxVal = Math.max(...reordered.flat(),1);
+  const container = document.getElementById('heatmapContainer');
+  let html = `<div class="heatmap-grid" style="grid-template-columns:36px repeat(24,1fr) 32px;">`;
+  html += '<div></div>';
+  for(let h=0;h<24;h++) html+=`<div class="heatmap-header">${h}</div>`;
+  html += '<div></div>';
+  reordered.forEach((row,di)=>{
+    html+=`<div class="heatmap-row-label">${dayLabels[di]}</div>`;
+    const rowTotal=row.reduce((a,b)=>a+b,0);
+    row.forEach(val=>{
+      const intensity=val/maxVal;
+      const bg=val===0?'rgba(30,41,59,0.4)':`rgba(0,212,255,${0.1+intensity*0.7})`;
+      const tc=intensity>0.4?'#F1F5F9':'#64748B';
+      html+=`<div class="heatmap-cell" style="background:${bg};color:${tc}">${val||''}</div>`;
+    });
+    html+=`<div class="heatmap-total">${rowTotal}</div>`;
+  });
+  html+='<div></div>';
+  for(let h=0;h<24;h++){const ct=reordered.reduce((s,row)=>s+row[h],0);html+=`<div class="heatmap-total">${ct||''}</div>`;}
+  html+='<div></div></div>';
+  container.innerHTML=html;
+}
+
+// ===================== ZONE 7: OTHER EXPENSES =====================
+function updateExpensesChart(expenses) {
+  const byCat={};
+  expenses.forEach(e=>{if(!byCat[e.category])byCat[e.category]={total:0,count:0};byCat[e.category].total+=e.amount;byCat[e.category].count++;});
+  const cats=Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total);
+
+  if (chartExpenses) chartExpenses.destroy();
+  chartExpenses = new Chart(document.getElementById('chartExpenses'), {
+    type:'bar',
+    data:{labels:cats,datasets:[{data:cats.map(c=>byCat[c].total),backgroundColor:providerColors.slice(0,cats.length),borderRadius:8,barThickness:26}]},
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,
+      plugins:{
+        legend:{display:false},
+        tooltip:{...tooltipOpts,callbacks:{label:ctx=>[`$${ctx.parsed.x.toFixed(2)}`,`${byCat[ctx.label].count} transactions`]}}
+      },
+      scales:{
+        x:{title:{display:true,text:'SGD',font:{family:"'Outfit'",size:11}},grid:{color:'rgba(148,163,184,0.06)'},ticks:{font:{family:"'JetBrains Mono'",size:10}}},
+        y:{grid:{display:false},ticks:{font:{family:"'Outfit'",size:11,weight:'500'}}}
+      }
+    },
+    plugins:[{id:'barLabels',afterDraw(chart){const{ctx}=chart;chart.data.datasets[0].data.forEach((val,i)=>{const meta=chart.getDatasetMeta(0);const bar=meta.data[i];ctx.save();ctx.font="500 10px 'JetBrains Mono'";ctx.fillStyle='#CBD5E1';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(`$${val.toFixed(0)} (${byCat[cats[i]].count})`,bar.x+8,bar.y);ctx.restore();});}}]
+  });
+}
+
+// ===================== ZONE 8: TABLE =====================
+const tableCols=[
+  {key:'date',label:'Date',fmt:s=>s.startDate?s.startDate.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):''},
+  {key:'location',label:'Location',fmt:s=>s.location},
+  {key:'country',label:'Country',fmt:s=>s.country},
+  {key:'provider',label:'Provider',fmt:s=>s.provider},
+  {key:'type',label:'Type',fmt:s=>s.type},
+  {key:'kwh',label:'kWh',fmt:s=>s.kwh.toFixed(1)},
+  {key:'duration',label:'Duration',fmt:s=>s.duration.toFixed(0)+'m'},
+  {key:'grossCost',label:'Cost',fmt:s=>'$'+s.grossCost.toFixed(2)},
+  {key:'rebate',label:'Rebate',fmt:s=>s.rebate>0?'$'+s.rebate.toFixed(2):'-'},
+  {key:'netCost',label:'Net Cost',fmt:s=>'$'+s.netCost.toFixed(2)},
+  {key:'costPerKwh',label:'$/kWh',fmt:s=>'$'+s.costPerKwh.toFixed(2)},
+  {key:'battery',label:'Battery',fmt:s=>`${s.battBefore}%\u2192${s.battAfter}%`}
+];
+let tableSortCol='date',tableSortAsc=true,tablePage=0,tableFilteredData=[];
+
+function buildTableHead(){
+  const tr=document.getElementById('tableHead');tr.innerHTML='';
+  tableCols.forEach(col=>{
+    const th=document.createElement('th');
+    const arrow=tableSortCol===col.key?(tableSortAsc?' \u25B2':' \u25BC'):'';
+    th.innerHTML=col.label+`<span class="sort-arrow">${arrow}</span>`;
+    th.addEventListener('click',()=>{if(tableSortCol===col.key)tableSortAsc=!tableSortAsc;else{tableSortCol=col.key;tableSortAsc=true;}renderTable();});
+    tr.appendChild(th);
+  });
+}
+function updateTable(sessions){tableFilteredData=sessions;tablePage=0;renderTable();}
+function renderTable(){
+  const search=document.getElementById('tableSearch').value.toLowerCase();
+  let data=tableFilteredData.filter(s=>s.location.toLowerCase().includes(search)||s.provider.toLowerCase().includes(search));
+  data.sort((a,b)=>{
+    let va,vb;
+    switch(tableSortCol){
+      case 'date':va=a.startDate||0;vb=b.startDate||0;break;
+      case 'kwh':va=a.kwh;vb=b.kwh;break;
+      case 'duration':va=a.duration;vb=b.duration;break;
+      case 'grossCost':va=a.grossCost;vb=b.grossCost;break;
+      case 'rebate':va=a.rebate;vb=b.rebate;break;
+      case 'netCost':va=a.netCost;vb=b.netCost;break;
+      case 'costPerKwh':va=a.costPerKwh;vb=b.costPerKwh;break;
+      default:va=a[tableSortCol]||'';vb=b[tableSortCol]||'';
+    }
+    if(va<vb)return tableSortAsc?-1:1;if(va>vb)return tableSortAsc?1:-1;return 0;
+  });
+  const pageSize=parseInt(document.getElementById('tablePageSize').value);
+  const totalPages=Math.ceil(data.length/pageSize)||1;
+  if(tablePage>=totalPages)tablePage=totalPages-1;
+  const start=tablePage*pageSize;
+  const pageData=data.slice(start,start+pageSize);
+  const tbody=document.getElementById('tableBody');tbody.innerHTML='';
+  pageData.forEach(s=>{
+    const tr=document.createElement('tr');
+    tr.dataset.sessionIdx=chargingSessions.indexOf(s);
+    if(s.idleFees>0)tr.classList.add('idle-highlight');
+    tableCols.forEach(col=>{const td=document.createElement('td');td.textContent=col.fmt(s);tr.appendChild(td);});
+    tbody.appendChild(tr);
+  });
+  buildTableHead();
+  const pag=document.getElementById('tablePagination');
+  pag.innerHTML=`
+    <button ${tablePage===0?'disabled':''}>First</button>
+    <button ${tablePage===0?'disabled':''}>Prev</button>
+    <span>Page ${tablePage+1} of ${totalPages} (${data.length} sessions)</span>
+    <button ${tablePage>=totalPages-1?'disabled':''}>Next</button>
+    <button ${tablePage>=totalPages-1?'disabled':''}>Last</button>`;
+  const btns=pag.querySelectorAll('button');
+  btns[0].onclick=()=>{tablePage=0;renderTable();};
+  btns[1].onclick=()=>{tablePage--;renderTable();};
+  btns[2].onclick=()=>{tablePage++;renderTable();};
+  btns[3].onclick=()=>{tablePage=Math.ceil(data.length/parseInt(document.getElementById('tablePageSize').value))-1;renderTable();};
+}
+function highlightTableRow(sessionIdx){
+  document.querySelectorAll('#tableBody tr').forEach(tr=>tr.classList.remove('row-highlight'));
+  const targetRow=document.querySelector(`#tableBody tr[data-session-idx="${sessionIdx}"]`);
+  if(targetRow){targetRow.classList.add('row-highlight');targetRow.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>targetRow.classList.remove('row-highlight'),3000);}
+  else{
+    const search=document.getElementById('tableSearch').value.toLowerCase();
+    const data=tableFilteredData.filter(s=>s.location.toLowerCase().includes(search)||s.provider.toLowerCase().includes(search));
+    const idx=data.findIndex(s=>chargingSessions.indexOf(s)===sessionIdx);
+    if(idx>=0){
+      const pageSize=parseInt(document.getElementById('tablePageSize').value);
+      tablePage=Math.floor(idx/pageSize);renderTable();
+      setTimeout(()=>{const row=document.querySelector(`#tableBody tr[data-session-idx="${sessionIdx}"]`);if(row){row.classList.add('row-highlight');row.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>row.classList.remove('row-highlight'),3000);}},100);
+    }
+  }
+}
+
+// ===================== MASTER UPDATE =====================
+function updateAll(){
+  const f=getFilters();updateFilterBadge(f);
+  const sessions=filterSessions(f),expenses=filterExpenses(f);
+  updateKPIs(sessions,expenses,f);
+  updateCostTimeChart(sessions,expenses);
+  updateProviderDonut(sessions);
+  updateTypeDonut(sessions);
+  updateScatter(sessions);
+  updateBatteryChart(sessions);
+  updateHeatmap(sessions);
+  updateExpensesChart(expenses);
+  updateTable(sessions);
+}
+
+// ===================== EVENT LISTENERS =====================
+['filterMonth','filterCountry','filterType','filterPaidBy'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
+});
+document.getElementById('providerList').addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
+document.getElementById('tableSearch').addEventListener('input',renderTable);
+document.getElementById('tablePageSize').addEventListener('change',()=>{tablePage=0;renderTable();});
+
+// ===================== INIT =====================
+async function initDashboard() {
+  let csvText = null;
+
+  try {
+    console.log('Fetching CSV from server API...');
+    const response = await fetch(CSV_URL);
+    if (response.ok) {
+      csvText = await response.text();
+      console.log('CSV fetch succeeded, bytes:', csvText.length);
+    } else {
+      throw new Error(`Fetch failed: HTTP ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Failed to fetch data:', error);
+    loadingMsg.innerHTML = `<strong>⚠️ Failed to load data</strong><br>${error.message}<br><small style="color:#94A3B8">Check browser console (F12) for details</small>`;
+    loadingMsg.style.color = '#FF6B6B';
+    loadingMsg.style.padding = '20px';
+    loadingMsg.style.fontSize = '12px';
+    return;
+  }
+
+  try {
+    if (!csvText || csvText.trim().length === 0) throw new Error('Empty CSV response');
+    processData(csvText);
+    initializeFilters();
+    buildTableHead();
+    updateAll();
+    loadingMsg.remove();
+    dashboardReady = true;
+    console.log('✓ Dashboard initialized successfully');
+  } catch (error) {
+    console.error('Data processing error:', error);
+    loadingMsg.innerHTML = `<strong>Error processing data</strong><br>${error.message}`;
+    loadingMsg.style.color = '#FF6B6B';
+    loadingMsg.style.padding = '20px';
+    loadingMsg.style.fontSize = '12px';
+  }
+}
+
+initDashboard();
+</script>
+</body>
+</html>

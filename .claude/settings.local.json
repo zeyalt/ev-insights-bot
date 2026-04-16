@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sL \"https://docs.google.com/spreadsheets/d/e/2PACX-1vSwMAeGbr71UIP91NTDY_-NNnsKrFiEEGC6vFspwBBFqgbLdkzDwCZLVLEheLoJJlcO-1cDdiyuu5_t/pub?output=csv\" -o \"/Users/zeyalt/My Data Science/Projects/ev-insights-bot/data.csv\")",
+      "Bash(open:*)"
+    ]
+  }
+}

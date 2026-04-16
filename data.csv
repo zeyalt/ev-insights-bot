@@ -1,0 +1,66 @@
+Timestamp,What data do you want to record?,Charging Start Date & Time,Charging End Date & Time,Idle Start Date & Time,Idle End Date & Time,Country,Charging Type,Charging Location,Odometer (km) Before Charging,Battery Percentage Before Charging,Battery Percentage After Charging,Total kWh Charged,Charging Provider,Subscription Plan,Currency,Charging Cost,Idle Fees,"Rebate, if any",Payment Mode,Payment By,Expense Category,Expense Date,Amount Paid (SGD),Payment Method,Paid By
+09/02/2026 22:11:10,Charging-Related,01/02/2026 15:40:00,01/02/2026 20:25:00,,,Singapore,AC,655 Punggol East,257,66,100,30.22,Shell Recharge,[Shell Recharge] Eurokars MG 500kWh,SGD,20.25,,20.25,Debit/Credit Card,Zeya & Atiqah,,,,,
+09/02/2026 22:12:26,Charging-Related,31/01/2026 17:53:00,31/01/2026 20:53:00,,,Singapore,AC,655 Punggol East,227,50,74,21.18,Shell Recharge,[Shell Recharge] Eurokars MG 500kWh,SGD,14.19,,14.19,Debit/Credit Card,Zeya & Atiqah,,,,,
+09/02/2026 22:12:56,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,29/01/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+09/02/2026 22:13:16,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,23/01/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+09/02/2026 22:13:31,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,17/01/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+09/02/2026 22:13:45,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,13/01/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+09/02/2026 22:13:57,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,09/01/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+09/02/2026 22:14:11,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,02/01/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+09/02/2026 22:14:32,Other Expenses,,,,,,,,,,,,,,,,,,,,Parking.sg,29/01/2026,0.60,Debit/Credit Card,Zeya & Atiqah
+09/02/2026 22:15:49,Charging-Related,06/02/2026 20:24:00,06/02/2026 22:07:00,,,Singapore,AC,311A Tampines St 33,506,44,51,6.088,SP Mobility,None,SGD,4.12,,,Debit/Credit Card,Atiqah,,,,,
+09/02/2026 22:16:09,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,04/02/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+09/02/2026 22:16:36,Other Expenses,,,,,,,,,,,,,,,,,,,,Insurance,05/02/2026,"1,557.97",Debit/Credit Card,Zeya & Atiqah
+09/02/2026 22:17:32,Charging-Related,07/02/2026 17:22:00,07/02/2026 20:56:00,,,Singapore,AC,655 Punggol East,565,38,67,25.31,Shell Recharge,None,SGD,16.96,,,Debit/Credit Card,Atiqah,,,,,
+09/02/2026 22:18:29,Charging-Related,09/02/2026 17:40:00,09/02/2026 20:02:00,,,Singapore,AC,Nexus International School,683,41,71,23.35,Charge+,None,SGD,14.69,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+10/02/2026 13:09:18,Charging-Related,10/02/2026 10:12:00,10/02/2026 13:03:00,,,Singapore,AC,5 Tampines Central 1,709,65,100,27.763,SP Mobility,None,SGD,20.57,,,Debit/Credit Card,Atiqah,,,,,
+13/02/2026 08:29:39,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,09/02/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+13/02/2026 08:29:52,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,12/02/2026,50.00,NETS,Zeya & Atiqah
+13/02/2026 08:43:10,Charging-Related,12/02/2026 09:35:00,12/02/2026 11:56:00,12/02/2026 11:57:00,12/02/2026 12:39:00,Singapore,AC,Grab HQ,823,75,100,21.937,SP Mobility,None,SGD,16.26,8.50,,Debit/Credit Card,Zeya & Atiqah,,,,,
+13/02/2026 22:57:11,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,13/02/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+14/02/2026 21:45:33,Charging-Related,14/02/2026 19:08:00,14/02/2026 21:39:00,,,Singapore,AC,655 Punggol East,1018,59,79,17.84,Shell Recharge,[Shell Recharge] Eurokars MG 500kWh,SGD,11.95,,11.95,Debit/Credit Card,Zeya & Atiqah,,,,,
+16/02/2026 22:19:21,Charging-Related,16/02/2026 17:47:00,16/02/2026 19:22:00,,,Singapore,AC,Nexus International School,1093,63,82,15.51,Charge+,None,SGD,9.76,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+21/02/2026 10:30:17,Charging-Related,18/02/2026 12:44:00,18/02/2026 14:53:00,,,Singapore,AC,655 Punggol East,1127,74,90,14.06,Shell Recharge,[Shell Recharge] Eurokars MG 500kWh,SGD,9.42,,9.42,Debit/Credit Card,Zeya & Atiqah,,,,,
+21/02/2026 14:06:28,Charging-Related,21/02/2026 09:19:00,21/02/2026 11:25:00,,,Singapore,AC,Nexus International School ,1302,53,79,20.34,Charge+,None,SGD,12.79,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+21/02/2026 20:34:17,Charging-Related,21/02/2026 18:45:00,21/02/2026 20:30:00,,,Singapore,AC,655 Punggol East,1375,66,80,12.26,Shell Recharge,[Shell Recharge] Eurokars MG 500kWh,SGD,8.21,,8.21,Debit/Credit Card,Zeya & Atiqah,,,,,
+23/02/2026 08:33:30,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,19/02/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+23/02/2026 12:35:48,Charging-Related,23/02/2026 11:15:00,23/02/2026 12:16:00,,,Singapore,AC,Tampines Plaza,1482,58,68,9.76,SP Mobility,None,SGD,7.23,,,Debit/Credit Card,Atiqah,,,,,
+26/02/2026 05:15:34,Charging-Related,25/02/2026 21:16:00,26/02/2026 01:08:00,,,Singapore,AC,Waterbay Condo,1679,25,57,27.14,Charge+,[Charge+] Lite 190kWh,SGD,14.86,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+26/02/2026 05:17:41,Charging-Related,26/02/2026 01:08:00,26/02/2026 04:06:00,,,Singapore,AC,Waterbay Condo,1679,57,82,20.83,Charge+,None,SGD,12.24,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+26/02/2026 21:16:28,Charging-Related,26/02/2026 18:27:00,26/02/2026 20:27:00,,,Singapore,AC,655 Punggol East,1752,63,79,14.11,Shell Recharge,[Shell Recharge] Eurokars MG 500kWh,SGD,9.45,,9.45,Debit/Credit Card,Zeya & Atiqah,,,,,
+28/02/2026 22:43:05,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,25/02/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+01/03/2026 11:27:42,Charging-Related,28/02/2026 18:08:00,28/02/2026 21:34:00,,,Singapore,AC,432 Sengkang West Way,1854,57,86,22.11,Shell Recharge,[Shell Recharge] Eurokars MG 500kWh,SGD,14.81,,14.81,Debit/Credit Card,Zeya & Atiqah,,,,,
+04/03/2026 06:51:39,Charging-Related,03/03/2026 20:28:00,04/03/2026 02:56:00,,,Singapore,AC,Waterbay Condo,2074,38,90,44.08,Charge+,[Charge+] Ultra-Lite 125kWh,SGD,24.33,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+05/03/2026 14:47:26,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,02/03/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+07/03/2026 09:26:58,Other Expenses,,,,,,,,,,,,,,,,,,,,Monthly Mortgage,04/03/2026,"1,449.50",Debit/Credit Card,Zeya & Atiqah
+11/03/2026 12:36:25,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,08/03/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+11/03/2026 12:44:37,Charging-Related,08/03/2026 18:56:00,08/03/2026 21:56:00,,,Singapore,AC,Bedok Food Centre,2334,31,68,31.24,CDG Engie,None,SGD,21.09,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+11/03/2026 12:46:57,Charging-Related,11/03/2026 06:00:00,11/03/2026 08:19:00,,,Singapore,AC,Waterbay Condo,2505,31,50,16.22,Charge+,[Charge+] Ultra-Lite 125kWh,SGD,9.53,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+12/03/2026 06:07:25,Charging-Related,11/03/2026 20:57:00,12/03/2026 03:40:00,,,Singapore,AC,Waterbay Condo,2617,24,80,47.04,Charge+,[Charge+] Ultra-Lite 125kWh,SGD,27.64,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+15/03/2026 17:38:37,Charging-Related,15/03/2026 06:10:00,15/03/2026 08:42:00,,,Singapore,AC,Waterbay Condo,2845,29,50,17.74,Charge+,[Charge+] Ultra-Lite 125kWh,SGD,10.42,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+15/03/2026 20:08:34,Charging-Related,15/03/2026 14:30:00,15/03/2026 17:54:00,,,Singapore,AC,655 Punggol East,2877,43,71,24.18,Shell Recharge,[Shell Recharge] Eurokars MG 500kWh,SGD,16.20,,16.20,Debit/Credit Card,Zeya & Atiqah,,,,,
+16/03/2026 09:34:05,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,13/03/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+18/03/2026 10:32:16,Charging-Related,18/03/2026 05:57:00,18/03/2026 10:30:00,,,Singapore,AC,Waterbay Condo,3065,28,66,31.83,Charge+,None,SGD,18.70,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+19/03/2026 19:57:30,Charging-Related,19/03/2026 16:07:00,19/03/2026 18:03:00,,,Singapore,AC,Waterbay Condo,3133,49,65,13.55,Charge+,[Charge+] Ultra-Lite 125kWh,SGD,7.96,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+21/03/2026 16:58:13,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,18/03/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+22/03/2026 14:16:34,Charging-Related,22/03/2026 12:35:00,22/03/2026 14:08:00,,,Singapore,AC,Mediacorp Public Carpark,3358,46,65,16.194,CDG Engie,None,SGD,10.93,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+22/03/2026 16:30:52,Charging-Related,22/03/2026 14:56:00,22/03/2026 16:28:00,,,Singapore,AC,830 Woodlands Street 83,3381,61,73,11,CDG Engie,None,SGD,7.42,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+26/03/2026 08:42:18,Charging-Related,26/03/2026 06:40:00,26/03/2026 08:29:00,,,Singapore,AC,Waterbay Condo,3585,28,43,12.73,Charge+,[Charge+] Ultra-Lite 125kWh,SGD,7.48,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+26/03/2026 08:42:33,Other Expenses,,,,,,,,,,,,,,,,,,,,Parking.sg,25/03/2026,0.48,Debit/Credit Card,Zeya & Atiqah
+27/03/2026 06:37:40,Charging-Related,26/03/2026 18:47:00,27/03/2026 00:53:00,,,Singapore,AC,Waterbay Condo,3654,29,79,42.6,Charge+,[Charge+] Ultra-Lite 125kWh,SGD,25.03,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+28/03/2026 09:28:14,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,25/03/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+30/03/2026 07:12:40,Charging-Related,29/03/2026 20:06:00,30/03/2026 02:04:00,,,Singapore,AC,Waterbay Condo,3920,22,71,41.71,Charge+,[Charge+] Ultra-Lite 125kWh,SGD,24.96,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+02/04/2026 07:26:53,Charging-Related,01/04/2026 21:13:00,02/04/2026 03:47:00,,,Singapore,AC,Waterbay Condo,4113,27,80,44.33,Charge+,[Charge+] Lite 190kWh,SGD,26.53,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+02/04/2026 09:14:54,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,30/03/2026,50.00,Debit/Credit Card,Zeya & Atiqah
+05/04/2026 23:42:21,Charging-Related,04/04/2026 13:23:00,04/04/2026 14:01:00,,,Malaysia,DC,Eco Galleria @ Eco Botanic,4311,34,80,36.844,chargEV,None,MYR,58.95,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+05/04/2026 23:45:15,Charging-Related,04/04/2026 14:03:00,04/04/2026 14:13:00,,,Malaysia,DC,Eco Galleria @ Eco Botanic,4311,80,90,8.703,chargEV,None,MYR,13.92,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+05/04/2026 23:48:59,Charging-Related,05/04/2026 15:18:00,05/04/2026 18:15:00,,,Malaysia,AC,Eco Galleria - Iskandar Puteri,4460,54,90,29.99,JomCharge,None,MYR,31.49,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+05/04/2026 23:51:11,Other Expenses,,,,,,,,,,,,,,,,,,,,Monthly Mortgage,30/03/2026,1449.5,Debit/Credit Card,Zeya & Atiqah
+08/04/2026 08:13:22,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,05/04/2026,50,Debit/Credit Card,Zeya & Atiqah
+08/04/2026 12:48:59,Other Expenses,,,,,,,,,,,,,,,,,,,,Parking.sg,08/04/2026,1.4,Debit/Credit Card,Atiqah
+09/04/2026 19:16:55,Charging-Related,08/04/2026 17:06:00,08/04/2026 21:03:00,,,Singapore,AC,311A Tampines St 33,4664,45,62,14.572,SP Mobility,None,SGD,10.17,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+11/04/2026 19:47:57,Charging-Related,11/04/2026 10:14:00,11/04/2026 11:24:00,,,Singapore,AC,Nexus International School,4805,32,46,11.29,Charge+,None,SGD,7.1,,,Debit/Credit Card,Zeya & Atiqah,,,,,
+11/04/2026 21:24:56,Charging-Related,11/04/2026 18:33:00,11/04/2026 21:21:00,,,Singapore,AC,655 Punggol East,4820,43,61,15.63,Shell Recharge,[Shell Recharge] Eurokars MG 500kWh,SGD,10.47,,10.47,Debit/Credit Card,Zeya & Atiqah,,,,,
+12/04/2026 20:25:17,Charging-Related,12/04/2026 17:37:00,12/04/2026 20:20:00,,,Singapore,AC,655 Punggol East,4874,50,72,19.35,Shell Recharge,[Shell Recharge] Eurokars MG 500kWh,SGD,12.96,,12.96,Debit/Credit Card,Zeya & Atiqah,,,,,
+13/04/2026 09:23:49,Other Expenses,,,,,,,,,,,,,,,,,,,,Cardcard Auto Top-up,10/04/2026,50,Debit/Credit Card,Zeya & Atiqah
+16/04/2026 08:15:36,Charging-Related,15/04/2026 21:14:00,16/04/2026 03:54:00,,,Singapore,AC,Waterbay Condo,5025,36,90,45.13,Charge+,[Charge+] Lite 190kWh,SGD,27.01,,,Debit/Credit Card,Zeya & Atiqah,,,,,
