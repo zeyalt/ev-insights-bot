@@ -396,8 +396,8 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
         <div id="heatmapContainer" style="overflow-x:auto"></div>
       </div>
       <div class="card reveal" style="animation-delay:0.6s">
-        <h2>Other Expenses</h2>
-        <div class="chart-wrap h300"><canvas id="chartExpenses"></canvas></div>
+        <h2>Expenses by Category</h2>
+        <div class="chart-wrap h300"><canvas id="chartCombinedExpenses"></canvas></div>
       </div>
     </div>
 
@@ -897,7 +897,77 @@ function updateHeatmap(sessions) {
   container.innerHTML=html;
 }
 
-// ===================== ZONE 7: OTHER EXPENSES =====================
+// ===================== ZONE 7: COMBINED EXPENSE BREAKDOWN BY CATEGORY =====================
+let chartCombinedExpenses;
+function updateCombinedExpensesCategoryChart(sessions, expenses) {
+  const byCat = {};
+
+  // Add charging costs under "EV Charging" category
+  sessions.forEach(s => {
+    if (!byCat['EV Charging']) byCat['EV Charging'] = {total: 0, count: 0};
+    byCat['EV Charging'].total += s.netCost + s.idleFees;
+    byCat['EV Charging'].count += 1;
+  });
+
+  // Add other expenses with their categories
+  expenses.forEach(e => {
+    if (!byCat[e.category]) byCat[e.category] = {total: 0, count: 0};
+    byCat[e.category].total += e.amount;
+    byCat[e.category].count += 1;
+  });
+
+  const cats = Object.keys(byCat).sort((a,b) => byCat[b].total - byCat[a].total);
+  const totalSpend = Object.values(byCat).reduce((s, c) => s + c.total, 0);
+  const expenseColors = ['#00D4FF', '#FFB020', '#34D399', '#FF6B6B', '#A78BFA', '#38BDF8', '#94A3B8', '#F87171', '#6366F1'];
+
+  if (chartCombinedExpenses) chartCombinedExpenses.destroy();
+  chartCombinedExpenses = new Chart(document.getElementById('chartCombinedExpenses'), {
+    type: 'doughnut',
+    data: {
+      labels: cats,
+      datasets: [{
+        data: cats.map(c => byCat[c].total),
+        backgroundColor: expenseColors.slice(0, cats.length),
+        borderWidth: 0,
+        hoverOffset: 8,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: chartAnimOpts, cutout: '62%',
+      plugins: {
+        legend: legendOpts,
+        tooltip: {
+          ...tooltipOpts,
+          callbacks: {
+            label: ctx => {
+              const d = byCat[ctx.label];
+              return [`$${d.total.toFixed(2)}`, `${d.count} transactions`, `${((d.total/totalSpend)*100).toFixed(1)}% of total`];
+            }
+          }
+        }
+      }
+    },
+    plugins: [{
+      id: 'centerText',
+      afterDraw(chart) {
+        const {ctx, chartArea: {left, right, top, bottom}} = chart;
+        const cx = (left + right) / 2, cy = (top + bottom) / 2;
+        ctx.save();
+        ctx.font = "500 11px 'Outfit'";
+        ctx.fillStyle = '#64748B';
+        ctx.textAlign = 'center';
+        ctx.fillText('TOTAL SPEND', cx, cy - 10);
+        ctx.font = "600 20px 'JetBrains Mono'";
+        ctx.fillStyle = '#F1F5F9';
+        ctx.fillText('$' + totalSpend.toFixed(0), cx, cy + 14);
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+// ===================== ZONE 7: OTHER EXPENSES (Legacy) =====================
 function updateExpensesChart(expenses) {
   const byCat={};
   expenses.forEach(e=>{if(!byCat[e.category])byCat[e.category]={total:0,count:0};byCat[e.category].total+=e.amount;byCat[e.category].count++;});
@@ -1023,7 +1093,7 @@ function updateAll(){
   updateScatter(sessions);
   updateBatteryChart(sessions);
   updateHeatmap(sessions);
-  updateExpensesChart(expenses);
+  updateCombinedExpensesCategoryChart(sessions,expenses);
   updateTable(sessions);
 }
 

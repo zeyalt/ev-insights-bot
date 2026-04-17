@@ -116,13 +116,24 @@ def build_insights(charging, expenses, period=None, prev_period=None):
     cur_e = month_filter(expenses, period)
     prev_e = month_filter(expenses, prev_period)
 
-    # --- Expense distribution (all-time) ---
-    all_charging_net = charging["net_cost"].sum() + charging["idle_fees"].sum()
-    by_cat = expenses.groupby("Expense Category")["amount"].sum().sort_values(ascending=False)
+    # --- Expense distribution by category (combined: EV Charging + Other) ---
+    by_category = {}
+
+    # Add EV Charging as a category
+    ev_charging_cost = charging["net_cost"].sum() + charging["idle_fees"].sum()
+    if ev_charging_cost > 0:
+        by_category["EV Charging"] = ev_charging_cost
+
+    # Add other expense categories
+    other_by_cat = expenses.groupby("Expense Category")["amount"].sum()
+    for cat, amt in other_by_cat.items():
+        by_category[cat] = by_category.get(cat, 0) + amt
+
+    # Sort by amount descending
+    sorted_cats = sorted(by_category.items(), key=lambda x: x[1], reverse=True)
     expense_lines = []
-    for cat, amt in by_cat.items():
+    for cat, amt in sorted_cats:
         expense_lines.append(f"  {cat}: ${amt:,.2f}")
-    expense_lines.insert(0, f"  Charging (net + idle): ${all_charging_net:,.2f}")
 
     # --- MTD gross charging ---
     mtd_gross = cur_c["gross_cost"].sum()
