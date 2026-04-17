@@ -504,19 +504,23 @@ function processData(csvText) {
       const startDate = parseDate(r['Charging Start Date & Time']);
       const endDate = parseDate(r['Charging End Date & Time']);
       const duration = (startDate && endDate) ? (endDate - startDate) / 60000 : 0;
+      const durationHours = duration / 60;
       const kwh = parseNum(r['Total kWh Charged']);
       const netCost = cost - rebate;
+      const battBefore = parseNum(r['Battery Percentage Before Charging']);
+      const battAfter = parseNum(r['Battery Percentage After Charging']);
       chargingSessions.push({
-        startDate, endDate, duration,
+        startDate, endDate, duration, durationHours,
         country: (r['Country'] || '').trim(), type: (r['Charging Type'] || '').trim(),
         location: (r['Charging Location'] || '').trim(),
         odometer: parseNum(r['Odometer (km) Before Charging']),
-        battBefore: parseNum(r['Battery Percentage Before Charging']),
-        battAfter: parseNum(r['Battery Percentage After Charging']),
+        battBefore, battAfter,
         kwh, provider: (r['Charging Provider'] || '').trim(),
         plan: (r['Subscription Plan'] || '').trim(),
         currency, grossCost: cost, rebate, netCost, idleFees: idle,
         costPerKwh: kwh > 0 ? netCost / kwh : 0,
+        chargingSpeedKwhPerHour: durationHours > 0 ? kwh / durationHours : 0,
+        batteryIncreaseRatePerHour: durationHours > 0 ? (battAfter - battBefore) / durationHours : 0,
         paidBy: (r['Payment By'] || '').trim(),
         monthKey: startDate ? `${startDate.getFullYear()}-${String(startDate.getMonth()+1).padStart(2,'0')}` : ''
       });
@@ -926,7 +930,9 @@ const tableCols=[
   {key:'provider',label:'Provider',fmt:s=>s.provider},
   {key:'type',label:'Type',fmt:s=>s.type},
   {key:'kwh',label:'kWh',fmt:s=>s.kwh.toFixed(1)},
-  {key:'duration',label:'Duration',fmt:s=>s.duration.toFixed(0)+'m'},
+  {key:'durationHours',label:'Duration (h)',fmt:s=>s.durationHours.toFixed(1)},
+  {key:'chargingSpeedKwhPerHour',label:'Speed (kWh/h)',fmt:s=>s.chargingSpeedKwhPerHour.toFixed(2)},
+  {key:'batteryIncreaseRatePerHour',label:'Battery %/h',fmt:s=>s.batteryIncreaseRatePerHour.toFixed(1)},
   {key:'grossCost',label:'Cost',fmt:s=>'$'+s.grossCost.toFixed(2)},
   {key:'rebate',label:'Rebate',fmt:s=>s.rebate>0?'$'+s.rebate.toFixed(2):'-'},
   {key:'netCost',label:'Net Cost',fmt:s=>'$'+s.netCost.toFixed(2)},

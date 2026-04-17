@@ -74,6 +74,10 @@ def fetch_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     charging["cost_per_kwh"] = charging["net_cost"] / charging["kwh"].replace(0, float("nan"))
 
     charging["duration_min"] = (charging["end"] - charging["start"]).dt.total_seconds() / 60
+    charging["duration_hours"] = charging["duration_min"] / 60
+    charging["charging_speed_kwh_per_hour"] = charging["kwh"] / charging["duration_hours"].replace(0, float("nan"))
+    charging["battery_increase_pct_per_hour"] = (charging["batt_after"] - charging["batt_before"]) / charging["duration_hours"].replace(0, float("nan"))
+
     charging["month"] = charging["start"].dt.to_period("M")
     charging = charging.sort_values("start").reset_index(drop=True)
 
@@ -157,6 +161,11 @@ def build_insights(charging, expenses, period=None, prev_period=None):
     deep_discharge = charging[charging["batt_before"] <= 25]
     high_charge = charging[charging["batt_after"] >= 90]
 
+    # Charging speed metrics
+    avg_charging_speed = charging["charging_speed_kwh_per_hour"].mean() if len(charging) > 0 else 0
+    avg_battery_rate = charging["battery_increase_pct_per_hour"].mean() if len(charging) > 0 else 0
+    avg_duration_hours = charging["duration_hours"].mean() if len(charging) > 0 else 0
+
     # Most used location
     top_loc = charging["Charging Location"].value_counts().head(3) if len(charging) > 0 else pd.Series()
 
@@ -207,6 +216,9 @@ def build_insights(charging, expenses, period=None, prev_period=None):
   \U0001F698 Est. total distance: {total_dist:,.0f} km
   \u26A1 Avg efficiency: {efficiency_km_per_kwh:.1f} km/kWh
   \U0001F50B Avg charge gain per session: {avg_charge_pct:.0f}%
+  \u231A Avg charging duration: {avg_duration_hours:.1f} hours
+  \U0001F4A1 Avg charging speed: {avg_charging_speed:.1f} kWh/hour
+  \U0001F4CB Avg battery increase rate: {avg_battery_rate:.1f}%/hour
   \U0001F7E2 Sessions starting \u226425%: {len(deep_discharge)} ({len(deep_discharge)/len(charging)*100:.0f}% of total)
   \U0001F534 Sessions charging to \u226590%: {len(high_charge)} ({len(high_charge)/len(charging)*100:.0f}% of total)"""
 
