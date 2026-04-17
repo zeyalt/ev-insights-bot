@@ -122,6 +122,12 @@ body::before{
 .checkbox-dropdown-list label:hover{background:var(--bg-elevated);color:var(--text)}
 .checkbox-dropdown-list input[type=checkbox]{accent-color:var(--cyan)}
 
+/* ─── Radio Buttons ─── */
+.radio-group{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.radio-label{display:flex;align-items:center;gap:6px;font-size:0.8rem;font-weight:500;color:var(--text2);cursor:pointer;white-space:nowrap;transition:color 0.2s}
+.radio-label:hover{color:var(--text)}
+.radio-label input[type=radio]{accent-color:var(--cyan);cursor:pointer;margin:0}
+
 /* ─── Grid ─── */
 .zone-grid{display:grid;grid-template-columns:1fr;gap:24px;margin-top:20px}
 .zone-row-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
@@ -281,8 +287,11 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
 
 /* ─── Responsive ─── */
 @media(max-width:768px){
-  .filter-inner{gap:8px}
-  .filter-group select,.filter-group input,.checkbox-dropdown-btn{min-width:80px;font-size:0.75rem;padding:6px 10px}
+  .filter-inner{gap:8px;flex-direction:column;align-items:stretch}
+  .filter-group{width:100%}
+  .filter-group select,.filter-group input,.checkbox-dropdown-btn{min-width:80px;font-size:0.75rem;padding:6px 10px;width:100%}
+  .radio-group{flex-direction:column;gap:8px}
+  .radio-label{width:100%;justify-content:flex-start;padding:8px}
   .kpi-value{font-size:1.2rem}
   .container{padding:0 14px}
   .dashboard-header h1{font-size:1.35rem}
@@ -310,19 +319,19 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
       </div>
       <div class="filter-group">
         <label>Country</label>
-        <select id="filterCountry">
-          <option value="all">All</option>
-          <option value="Singapore">Singapore</option>
-          <option value="Malaysia">Malaysia</option>
-        </select>
+        <div class="radio-group" id="filterCountryGroup">
+          <label class="radio-label"><input type="radio" name="country" value="all" checked> All</label>
+          <label class="radio-label"><input type="radio" name="country" value="Singapore"> Singapore</label>
+          <label class="radio-label"><input type="radio" name="country" value="Malaysia"> Malaysia</label>
+        </div>
       </div>
       <div class="filter-group">
         <label>AC or DC?</label>
-        <select id="filterType">
-          <option value="all">All</option>
-          <option value="AC">AC</option>
-          <option value="DC">DC</option>
-        </select>
+        <div class="radio-group" id="filterTypeGroup">
+          <label class="radio-label"><input type="radio" name="type" value="all" checked> All</label>
+          <label class="radio-label"><input type="radio" name="type" value="AC"> AC</label>
+          <label class="radio-label"><input type="radio" name="type" value="DC"> DC</label>
+        </div>
       </div>
       <div class="filter-group">
         <label>Charging Provider</label>
@@ -570,8 +579,8 @@ let crossFilterType = null;
 
 function getFilters() {
   const month = monthSelect.value;
-  const country = document.getElementById('filterCountry').value;
-  const ctype = document.getElementById('filterType').value;
+  const country = document.querySelector('input[name="country"]:checked').value;
+  const ctype = document.querySelector('input[name="type"]:checked').value;
   const providerChecks = providerList.querySelectorAll('input[type=checkbox]');
   const selectedProviders = [...providerChecks].filter(c => c.checked).map(c => c.value);
   if (selectedProviders.length === allProviders.length) providerBtn.textContent = 'All Providers';
@@ -613,8 +622,8 @@ function updateFilterBadge(f) {
 }
 function clearFilters() {
   monthSelect.value = 'all';
-  document.getElementById('filterCountry').value = 'all';
-  document.getElementById('filterType').value = 'all';
+  document.querySelector('input[name="country"][value="all"]').checked = true;
+  document.querySelector('input[name="type"][value="all"]').checked = true;
   providerList.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = true);
   crossFilterProvider = null; crossFilterType = null; updateAll();
 }
@@ -1082,8 +1091,11 @@ function updateAll(){
 }
 
 // ===================== EVENT LISTENERS =====================
-['filterMonth','filterCountry','filterType'].forEach(id=>{
-  document.getElementById(id).addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
+document.getElementById('filterMonth').addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
+['filterCountryGroup','filterTypeGroup'].forEach(id=>{
+  document.getElementById(id).querySelectorAll('input[type="radio"]').forEach(radio=>{
+    radio.addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
+  });
 });
 document.getElementById('providerList').addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
 document.getElementById('tableSearch').addEventListener('input',renderTable);
