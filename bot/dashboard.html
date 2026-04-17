@@ -317,7 +317,7 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
         </select>
       </div>
       <div class="filter-group">
-        <label>Type</label>
+        <label>AC or DC?</label>
         <select id="filterType">
           <option value="all">All</option>
           <option value="AC">AC</option>
@@ -325,19 +325,11 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
         </select>
       </div>
       <div class="filter-group">
-        <label>Provider</label>
+        <label>Charging Provider</label>
         <div class="checkbox-dropdown" id="providerDropdown">
           <button class="checkbox-dropdown-btn" id="providerBtn">All Providers</button>
           <div class="checkbox-dropdown-list" id="providerList"></div>
         </div>
-      </div>
-      <div class="filter-group">
-        <label>Paid By</label>
-        <select id="filterPaidBy">
-          <option value="all">All</option>
-          <option value="Zeya & Atiqah">Zeya & Atiqah</option>
-          <option value="Atiqah">Atiqah</option>
-        </select>
       </div>
       <div class="filter-right">
         <span class="filter-badge" id="filterBadge" style="display:none"><span id="filterCount">0</span> active</span>
@@ -580,14 +572,13 @@ function getFilters() {
   const month = monthSelect.value;
   const country = document.getElementById('filterCountry').value;
   const ctype = document.getElementById('filterType').value;
-  const paidBy = document.getElementById('filterPaidBy').value;
   const providerChecks = providerList.querySelectorAll('input[type=checkbox]');
   const selectedProviders = [...providerChecks].filter(c => c.checked).map(c => c.value);
   if (selectedProviders.length === allProviders.length) providerBtn.textContent = 'All Providers';
   else if (selectedProviders.length === 0) providerBtn.textContent = 'None';
   else if (selectedProviders.length === 1) providerBtn.textContent = selectedProviders[0];
   else providerBtn.textContent = `${selectedProviders.length} selected`;
-  return { month, country, ctype, paidBy, selectedProviders };
+  return { month, country, ctype, selectedProviders };
 }
 function filterSessions(f) {
   return chargingSessions.filter(s => {
@@ -595,14 +586,12 @@ function filterSessions(f) {
     if (f.country !== 'all' && s.country !== f.country) return false;
     if (f.ctype !== 'all' && s.type !== f.ctype) return false;
     if (!f.selectedProviders.includes(s.provider)) return false;
-    if (f.paidBy !== 'all' && s.paidBy !== f.paidBy) return false;
     return true;
   });
 }
 function filterExpenses(f) {
   return otherExpenses.filter(e => {
     if (f.month !== 'all' && e.monthKey !== f.month) return false;
-    if (f.paidBy !== 'all' && e.paidBy !== f.paidBy) return false;
     return true;
   });
 }
@@ -617,7 +606,6 @@ function updateFilterBadge(f) {
   if (f.month !== 'all') count++;
   if (f.country !== 'all') count++;
   if (f.ctype !== 'all') count++;
-  if (f.paidBy !== 'all') count++;
   if (f.selectedProviders.length < allProviders.length) count++;
   const badge = document.getElementById('filterBadge'), clear = document.getElementById('filterClear');
   if (count > 0) { badge.style.display = ''; clear.style.display = ''; document.getElementById('filterCount').textContent = count; }
@@ -627,7 +615,6 @@ function clearFilters() {
   monthSelect.value = 'all';
   document.getElementById('filterCountry').value = 'all';
   document.getElementById('filterType').value = 'all';
-  document.getElementById('filterPaidBy').value = 'all';
   providerList.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = true);
   crossFilterProvider = null; crossFilterType = null; updateAll();
 }
@@ -739,7 +726,6 @@ function updateCostTimeChart(sessions, expenses) {
   expenses.forEach(e => { if (!e.monthKey) return; if (!months[e.monthKey]) months[e.monthKey]={net:0,idle:0,other:0}; months[e.monthKey].other+=e.amount; });
   const sortedKeys = Object.keys(months).sort();
   const labels = sortedKeys.map(monthLabel);
-  let cum=0; const cumData = sortedKeys.map(k=>{cum+=months[k].net+months[k].idle+months[k].other;return cum;});
 
   if (chartCostTime) chartCostTime.destroy();
   chartCostTime = new Chart(document.getElementById('chartCostTime'), {
@@ -747,10 +733,9 @@ function updateCostTimeChart(sessions, expenses) {
     data:{
       labels,
       datasets:[
-        {label:'Net Charging',data:sortedKeys.map(k=>months[k].net),backgroundColor:'rgba(0,212,255,0.7)',stack:'stack',borderRadius:6,order:2,borderSkipped:false},
-        {label:'Idle Fees',data:sortedKeys.map(k=>months[k].idle),backgroundColor:'rgba(255,176,32,0.7)',stack:'stack',borderRadius:6,order:2,borderSkipped:false},
-        {label:'Other Expenses',data:sortedKeys.map(k=>months[k].other),backgroundColor:'rgba(148,163,184,0.3)',stack:'stack',borderRadius:6,order:2,borderSkipped:false},
-        {label:'Cumulative',data:cumData,type:'line',borderColor:'#34D399',backgroundColor:'transparent',borderWidth:2,pointRadius:4,pointBackgroundColor:'#34D399',pointBorderColor:'#111827',pointBorderWidth:2,yAxisID:'y1',tension:0.4,order:1}
+        {label:'Net Charging',data:sortedKeys.map(k=>months[k].net),backgroundColor:'rgba(0,212,255,0.7)',stack:'stack',borderRadius:6,borderSkipped:false},
+        {label:'Idle Fees',data:sortedKeys.map(k=>months[k].idle),backgroundColor:'rgba(255,176,32,0.7)',stack:'stack',borderRadius:6,borderSkipped:false},
+        {label:'Other Expenses',data:sortedKeys.map(k=>months[k].other),backgroundColor:'rgba(148,163,184,0.3)',stack:'stack',borderRadius:6,borderSkipped:false}
       ]
     },
     options:{
@@ -758,8 +743,7 @@ function updateCostTimeChart(sessions, expenses) {
       plugins:{tooltip:{...tooltipOpts,callbacks:{label:ctx=>`${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`}},legend:legendOpts},
       scales:{
         x:{grid:{display:false},ticks:{font:{family:"'Outfit'",size:11}}},
-        y:{beginAtZero:true,title:{display:true,text:'SGD',font:{family:"'Outfit'",size:11}},ticks:{font:{family:"'JetBrains Mono'",size:10}},grid:{color:'rgba(148,163,184,0.06)'}},
-        y1:{position:'right',beginAtZero:true,title:{display:true,text:'Cumulative',font:{family:"'Outfit'",size:11}},ticks:{font:{family:"'JetBrains Mono'",size:10}},grid:{display:false}}
+        y:{beginAtZero:true,title:{display:true,text:'SGD',font:{family:"'Outfit'",size:11}},ticks:{font:{family:"'JetBrains Mono'",size:10}},grid:{color:'rgba(148,163,184,0.06)'}}
       }
     }
   });
@@ -1098,7 +1082,7 @@ function updateAll(){
 }
 
 // ===================== EVENT LISTENERS =====================
-['filterMonth','filterCountry','filterType','filterPaidBy'].forEach(id=>{
+['filterMonth','filterCountry','filterType'].forEach(id=>{
   document.getElementById(id).addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
 });
 document.getElementById('providerList').addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
