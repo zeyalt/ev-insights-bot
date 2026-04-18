@@ -128,11 +128,20 @@ body::before{
 .checkbox-dropdown-list label:hover{background:var(--bg-elevated);color:var(--text)}
 .checkbox-dropdown-list input[type=checkbox]{accent-color:var(--cyan)}
 
-/* ─── Radio Buttons ─── */
-.radio-group{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.radio-label{display:flex;align-items:center;gap:6px;font-size:0.8rem;font-weight:500;color:var(--text2);cursor:pointer;white-space:nowrap;transition:color 0.2s}
-.radio-label:hover{color:var(--text)}
-.radio-label input[type=radio]{accent-color:var(--cyan);cursor:pointer;margin:0}
+/* ─── Segmented Pill Buttons ─── */
+.seg-group{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.seg-btn{
+  font-family:'Outfit',sans-serif;font-size:0.73rem;font-weight:500;
+  padding:4px 10px;border-radius:20px;cursor:pointer;white-space:nowrap;
+  border:1px solid var(--border);
+  background:transparent;color:var(--text3);
+  transition:all 0.18s;line-height:1.4;
+}
+.seg-btn:hover{border-color:var(--cyan-dim);color:var(--text)}
+.seg-btn.active{
+  background:var(--cyan);color:#0B0F1A;
+  border-color:var(--cyan);font-weight:600;
+}
 
 /* ─── Grid ─── */
 .zone-grid{display:grid;grid-template-columns:1fr;gap:24px;margin-top:20px}
@@ -302,9 +311,8 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
   .filter-right{margin-left:auto;gap:6px}
   .filter-badge{font-size:0.6rem;padding:3px 8px}
   .filter-clear{font-size:0.65rem}
-  .radio-group{flex-direction:row;gap:4px;flex-wrap:wrap}
-  .radio-label{padding:4px 6px;font-size:0.7rem;gap:3px}
-  .radio-label input[type=radio]{width:14px;height:14px}
+  .seg-group{gap:3px}
+  .seg-btn{font-size:0.68rem;padding:3px 8px}
   .kpi-value{font-size:1.2rem}
   .container{padding:0 14px}
   .dashboard-header h1{font-size:1.35rem}
@@ -331,19 +339,17 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
         <select id="filterMonth"><option value="all">All Time</option></select>
       </div>
       <div class="filter-group">
-        <label>Country</label>
-        <div class="radio-group" id="filterCountryGroup">
-          <label class="radio-label"><input type="radio" name="country" value="all" checked> All</label>
-          <label class="radio-label"><input type="radio" name="country" value="Singapore"> Singapore</label>
-          <label class="radio-label"><input type="radio" name="country" value="Malaysia"> Malaysia</label>
+        <div class="seg-group" id="filterCountryGroup">
+          <button class="seg-btn active" data-value="all">All</button>
+          <button class="seg-btn" data-value="Singapore">SG</button>
+          <button class="seg-btn" data-value="Malaysia">MY</button>
         </div>
       </div>
       <div class="filter-group">
-        <label>AC or DC?</label>
-        <div class="radio-group" id="filterTypeGroup">
-          <label class="radio-label"><input type="radio" name="type" value="all" checked> All</label>
-          <label class="radio-label"><input type="radio" name="type" value="AC"> AC</label>
-          <label class="radio-label"><input type="radio" name="type" value="DC"> DC</label>
+        <div class="seg-group" id="filterTypeGroup">
+          <button class="seg-btn active" data-value="all">AC/DC</button>
+          <button class="seg-btn" data-value="AC">AC</button>
+          <button class="seg-btn" data-value="DC">DC</button>
         </div>
       </div>
       <div class="filter-group">
@@ -466,7 +472,7 @@ function parseCSV(text) {
   let inQuotes = false;
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
-    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if (ch === '"') { inQuotes = !inQuotes; current += ch; continue; }
     if (ch === '\n' && !inQuotes) { lines.push(current); current = ''; continue; }
     if (ch === '\r' && !inQuotes) continue;
     current += ch;
@@ -622,8 +628,8 @@ let crossFilterType = null;
 
 function getFilters() {
   const month = monthSelect.value;
-  const country = document.querySelector('input[name="country"]:checked').value;
-  const ctype = document.querySelector('input[name="type"]:checked').value;
+  const country = document.querySelector('#filterCountryGroup .seg-btn.active').dataset.value;
+  const ctype = document.querySelector('#filterTypeGroup .seg-btn.active').dataset.value;
   const providerChecks = providerList.querySelectorAll('input[type=checkbox]');
   const selectedProviders = [...providerChecks].filter(c => c.checked).map(c => c.value);
   if (selectedProviders.length === allProviders.length) providerBtn.textContent = 'All Providers';
@@ -665,8 +671,8 @@ function updateFilterBadge(f) {
 }
 function clearFilters() {
   monthSelect.value = 'all';
-  document.querySelector('input[name="country"][value="all"]').checked = true;
-  document.querySelector('input[name="type"][value="all"]').checked = true;
+  document.querySelectorAll('#filterCountryGroup .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.value === 'all'));
+  document.querySelectorAll('#filterTypeGroup .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.value === 'all'));
   providerList.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = true);
   crossFilterProvider = null; crossFilterType = null; updateAll();
 }
@@ -1137,8 +1143,12 @@ function updateAll(){
 // ===================== EVENT LISTENERS =====================
 document.getElementById('filterMonth').addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
 ['filterCountryGroup','filterTypeGroup'].forEach(id=>{
-  document.getElementById(id).querySelectorAll('input[type="radio"]').forEach(radio=>{
-    radio.addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
+  document.getElementById(id).querySelectorAll('.seg-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.getElementById(id).querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      crossFilterProvider=null;crossFilterType=null;updateAll();
+    });
   });
 });
 document.getElementById('providerList').addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
