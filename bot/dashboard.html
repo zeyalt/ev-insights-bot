@@ -34,7 +34,25 @@ body{
   background-image:
     radial-gradient(ellipse 80% 60% at 10% 10%, rgba(0,212,255,0.04) 0%, transparent 60%),
     radial-gradient(ellipse 60% 50% at 90% 80%, rgba(255,176,32,0.03) 0%, transparent 60%);
+  transition:background-color 0.3s,color 0.3s;
 }
+/* Light mode */
+body.light{
+  --bg-deep:#F0F4F8;--bg-surface:#FFFFFF;--bg-card:rgba(255,255,255,0.9);
+  --bg-elevated:rgba(241,245,249,0.8);
+  --text:#0F172A;--text2:#334155;--text3:#64748B;
+  --border:rgba(148,163,184,0.2);--border-hover:rgba(0,212,255,0.5);
+  --glass:rgba(0,0,0,0.02);
+  --shadow:0 4px 24px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-glow:0 0 40px rgba(0,212,255,0.08);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 10% 10%, rgba(0,212,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 80%, rgba(255,176,32,0.04) 0%, transparent 60%);
+}
+body.light .filter-bar{background:rgba(240,244,248,0.92);border-bottom-color:rgba(148,163,184,0.2)}
+body.light .checkbox-dropdown-list{background:#FFFFFF}
+body.light table.data-table tr:hover{background:rgba(241,245,249,0.9)}
+body.light table.data-table tr.idle-highlight{background:rgba(255,176,32,0.08)}
 /* Noise texture overlay */
 body::before{
   content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
@@ -300,6 +318,14 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
 ::-webkit-scrollbar-thumb{background:var(--text3);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--text2)}
 
+/* ─── Theme Toggle ─── */
+.theme-toggle{
+  font-size:1.2rem;background:none;border:1px solid var(--border);
+  border-radius:8px;padding:6px 10px;cursor:pointer;
+  color:var(--text2);transition:all 0.2s;
+}
+.theme-toggle:hover{border-color:var(--cyan);color:var(--text)}
+
 /* ─── Responsive ─── */
 @media(max-width:768px){
   .filter-inner{gap:6px;flex-direction:row}
@@ -316,6 +342,7 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
   .kpi-value{font-size:1.2rem}
   .container{padding:0 14px}
   .dashboard-header h1{font-size:1.35rem}
+  .theme-toggle{font-size:1rem;padding:5px 8px}
   .card{padding:14px;border-radius:12px}
 }
 </style>
@@ -324,9 +351,14 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
 
 <div class="container">
   <div class="dashboard-header">
-    <h1>EV Insights</h1>
-    <p>Charging analytics & expense tracking</p>
-    <div class="header-line"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <h1>EV Insights</h1>
+        <p>Charging analytics & expense tracking</p>
+        <div class="header-line"></div>
+      </div>
+      <button id="themeToggle" class="theme-toggle" title="Toggle light/dark mode">🌙</button>
+    </div>
   </div>
 </div>
 
@@ -1194,6 +1226,37 @@ async function initDashboard() {
     loadingMsg.style.padding = '20px';
     loadingMsg.style.fontSize = '12px';
   }
+}
+
+// ===================== THEME TOGGLE =====================
+// Apply saved theme before first render (avoid flash)
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'light') document.body.classList.add('light');
+
+// Initialize toggle button icon
+function updateThemeIcon() {
+  const isLight = document.body.classList.contains('light');
+  document.getElementById('themeToggle').textContent = isLight ? '☀️' : '🌙';
+}
+updateThemeIcon();
+
+// Toggle button click handler
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  updateThemeIcon();
+  applyChartTheme();
+});
+
+// Update Chart.js theme colors
+function applyChartTheme() {
+  const light = document.body.classList.contains('light');
+  Chart.defaults.color = light ? '#475569' : '#94A3B8';
+  Chart.defaults.borderColor = light ? 'rgba(100,116,139,0.15)' : 'rgba(148,163,184,0.08)';
+  // Redraw all charts with new defaults
+  [chartCostTime, chartProvider, chartTypeDonut, chartEfficiency, chartBattery, chartExpenses, chartCombinedExpenses].forEach(chart => {
+    if (chart && chart.update) chart.update();
+  });
 }
 
 initDashboard();
