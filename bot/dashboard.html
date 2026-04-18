@@ -528,11 +528,41 @@ function processData(csvText) {
     } else if (type === 'Other Expenses') {
       const expDate = parseDate(r['Expense Date'] + ' 00:00:00');
       const amt = parseNum(r['Amount Paid (SGD)']);
-      otherExpenses.push({
-        category: (r['Expense Category'] || '').trim(), date: expDate, amount: amt,
-        payMethod: (r['Payment Method'] || '').trim(), paidBy: (r['Paid By'] || '').trim(),
-        monthKey: expDate ? `${expDate.getFullYear()}-${String(expDate.getMonth()+1).padStart(2,'0')}` : ''
-      });
+      const category = (r['Expense Category'] || '').trim();
+
+      // If category is empty, treat as EV Charging expense
+      if (!category) {
+        const startDate = parseDate(r['Charging Start Date & Time']);
+        const endDate = parseDate(r['Charging End Date & Time']);
+        const duration = (startDate && endDate) ? (endDate - startDate) / 60000 : 0;
+        const durationHours = duration / 60;
+        const kwh = parseNum(r['Total kWh Charged']);
+        const netCost = amt - parseNum(r['Rebate, if any'] || 0);
+        const battBefore = parseNum(r['Battery Percentage Before Charging']);
+        const battAfter = parseNum(r['Battery Percentage After Charging']);
+        chargingSessions.push({
+          startDate, endDate, duration, durationHours,
+          country: (r['Country'] || '').trim(), type: (r['Charging Type'] || '').trim(),
+          location: (r['Charging Location'] || '').trim(),
+          odometer: parseNum(r['Odometer (km) Before Charging']),
+          battBefore, battAfter,
+          kwh, provider: (r['Charging Provider'] || '').trim(),
+          plan: (r['Subscription Plan'] || '').trim(),
+          currency: (r['Currency'] || 'SGD').trim(), grossCost: amt, rebate: parseNum(r['Rebate, if any'] || 0), netCost, idleFees: parseNum(r['Idle Fees'] || 0),
+          costPerKwh: kwh > 0 ? netCost / kwh : 0,
+          chargingSpeedKwhPerHour: durationHours > 0 ? kwh / durationHours : 0,
+          batteryIncreaseRatePerHour: durationHours > 0 ? (battAfter - battBefore) / durationHours : 0,
+          paidBy: (r['Payment By'] || '').trim(),
+          monthKey: startDate ? `${startDate.getFullYear()}-${String(startDate.getMonth()+1).padStart(2,'0')}` : ''
+        });
+      } else {
+        // Has a category, treat as other expense
+        otherExpenses.push({
+          category: category, date: expDate, amount: amt,
+          payMethod: (r['Payment Method'] || '').trim(), paidBy: (r['Paid By'] || '').trim(),
+          monthKey: expDate ? `${expDate.getFullYear()}-${String(expDate.getMonth()+1).padStart(2,'0')}` : ''
+        });
+      }
     }
   });
 
@@ -910,6 +940,7 @@ function updateCombinedExpensesCategoryChart(sessions, expenses) {
   });
 
   const cats = Object.keys(byCat).sort((a,b) => byCat[b].total - byCat[a].total);
+  console.log('Combined expense categories:', cats, 'Data:', byCat);
   const totalSpend = Object.values(byCat).reduce((s, c) => s + c.total, 0);
   const expenseColors = ['#00D4FF', '#FFB020', '#34D399', '#FF6B6B', '#A78BFA', '#38BDF8', '#94A3B8', '#F87171', '#6366F1'];
 

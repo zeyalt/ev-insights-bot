@@ -34,8 +34,19 @@ def fetch_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     resp.raise_for_status()
     df = pd.read_csv(io.StringIO(resp.text))
 
+    # Charging-related from form
     charging = df[df["What data do you want to record?"] == "Charging-Related"].copy()
-    expenses = df[df["What data do you want to record?"] == "Other Expenses"].copy()
+
+    # Other Expenses entries (split into two groups)
+    other_expenses_all = df[df["What data do you want to record?"] == "Other Expenses"].copy()
+
+    # Rows with empty Expense Category are actually charging expenses
+    other_expenses_all["Expense Category"] = other_expenses_all["Expense Category"].fillna("").astype(str).str.strip()
+    charging_from_other = other_expenses_all[other_expenses_all["Expense Category"] == ""].copy()
+    expenses = other_expenses_all[other_expenses_all["Expense Category"] != ""].copy()
+
+    # Combine charging rows
+    charging = pd.concat([charging, charging_from_other], ignore_index=True)
 
     # Parse charging fields
     charging["start"] = pd.to_datetime(
