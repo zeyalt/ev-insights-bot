@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EV Insights Dashboard</title>
+<title>IM6 EV Insights Tracking</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -50,7 +50,6 @@ body.light{
     radial-gradient(ellipse 60% 50% at 90% 80%, rgba(255,176,32,0.04) 0%, transparent 60%);
 }
 body.light .filter-bar{background:rgba(240,244,248,0.92);border-bottom-color:rgba(148,163,184,0.2)}
-body.light .checkbox-dropdown-list{background:#FFFFFF}
 body.light table.data-table tr:hover{background:rgba(241,245,249,0.9)}
 body.light table.data-table tr.idle-highlight{background:rgba(255,176,32,0.08)}
 /* Noise texture overlay */
@@ -91,7 +90,7 @@ body::before{
   text-transform:uppercase;letter-spacing:0.8px;
   white-space:nowrap;
 }
-.filter-group select,.filter-group input,.checkbox-dropdown-btn{
+.filter-group select,.filter-group input{
   font-family:'Outfit',sans-serif;font-size:0.75rem;font-weight:500;
   padding:5px 10px;
   border:1px solid var(--border);border-radius:6px;
@@ -107,10 +106,10 @@ body::before{
   padding-right:24px;
   min-width:90px;
 }
-.filter-group select:hover,.filter-group input:hover,.checkbox-dropdown-btn:hover{
+.filter-group select:hover,.filter-group input:hover{
   border-color:var(--cyan-dim);background:rgba(0,212,255,0.05);
 }
-.filter-group select:focus,.filter-group input:focus,.checkbox-dropdown-btn:focus{
+.filter-group select:focus,.filter-group input:focus{
   border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,255,0.12);
   background:var(--bg-elevated);
 }
@@ -126,25 +125,8 @@ body::before{
   opacity:0.8;transition:opacity 0.2s;
 }
 .filter-clear:hover{opacity:1;text-decoration:underline}
+.filter-divider{width:1px;height:24px;background:var(--border);margin:0 4px;flex-shrink:0;align-self:center}
 .filter-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-.checkbox-dropdown{position:relative}
-.checkbox-dropdown-btn{text-align:left;min-width:130px}
-.checkbox-dropdown-list{
-  display:none;position:absolute;top:calc(100% + 4px);left:0;
-  background:var(--bg-surface);
-  border:1px solid var(--border);border-radius:10px;
-  box-shadow:0 12px 40px rgba(0,0,0,0.5);
-  padding:6px 0;z-index:200;min-width:180px;max-height:220px;overflow-y:auto;
-  backdrop-filter:blur(12px);
-}
-.checkbox-dropdown-list.open{display:block}
-.checkbox-dropdown-list label{
-  display:flex;align-items:center;gap:8px;padding:6px 14px;
-  font-size:0.78rem;cursor:pointer;white-space:nowrap;
-  color:var(--text2);transition:background 0.15s,color 0.15s;
-}
-.checkbox-dropdown-list label:hover{background:var(--bg-elevated);color:var(--text)}
-.checkbox-dropdown-list input[type=checkbox]{accent-color:var(--cyan)}
 
 /* ─── Segmented Pill Buttons ─── */
 .seg-group{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
@@ -161,10 +143,26 @@ body::before{
   border-color:var(--cyan);font-weight:600;
 }
 
+/* ─── Provider Pills (multi-select) ─── */
+.provider-pill{
+  font-family:'Outfit',sans-serif;font-size:0.73rem;font-weight:500;
+  padding:4px 10px;border-radius:20px;cursor:pointer;white-space:nowrap;
+  border:1px solid var(--border);
+  background:transparent;color:var(--text3);
+  transition:all 0.18s;line-height:1.4;
+}
+.provider-pill:hover{border-color:var(--cyan-dim);color:var(--text)}
+.provider-pill.active{
+  border-color:var(--cyan);color:var(--cyan);font-weight:600;background:transparent;
+}
+
 /* ─── Grid ─── */
 .zone-grid{display:grid;grid-template-columns:1fr;gap:24px;margin-top:20px}
 .zone-row-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-@media(max-width:768px){.zone-row-2{grid-template-columns:1fr}}
+.zone-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px}
+.zone-row-4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+@media(max-width:768px){.zone-row-2{grid-template-columns:1fr}.zone-row-3{grid-template-columns:1fr}.zone-row-4{grid-template-columns:1fr}}
+@media(max-width:900px){.zone-row-3{grid-template-columns:1fr}.zone-row-4{grid-template-columns:repeat(2,1fr)}}
 
 /* ─── Reveal animation ─── */
 .reveal{opacity:0;transform:translateY(16px);animation:revealUp 0.5s ease forwards}
@@ -199,7 +197,7 @@ body::before{
 }
 
 /* ─── KPI Strip ─── */
-.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 @media(max-width:900px){.kpi-strip{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:560px){.kpi-strip{grid-template-columns:repeat(2,1fr)}}
 .kpi-card{
@@ -212,6 +210,7 @@ body::before{
   position:relative;overflow:hidden;
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   transition:border-color 0.3s,transform 0.2s;
+  min-height:120px;display:flex;flex-direction:column;justify-content:center;
 }
 .kpi-card:hover{border-color:var(--border-hover);transform:translateY(-2px)}
 .kpi-card::after{
@@ -236,6 +235,9 @@ body::before{
 
 /* ─── Chart containers ─── */
 .chart-wrap{position:relative;width:100%}
+.chart-wrap.h220{height:220px}
+.chart-wrap.h240{height:240px}
+.chart-wrap.h280{height:280px}
 .chart-wrap.h300{height:300px}
 .chart-wrap.h350{height:350px}
 .chart-wrap.h400{height:400px}
@@ -331,9 +333,8 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
   .filter-inner{gap:6px;flex-direction:row}
   .filter-group{flex-wrap:wrap}
   .filter-group label{display:none}
-  .filter-group select,.filter-group input,.checkbox-dropdown-btn{font-size:0.7rem;padding:4px 8px;min-width:auto}
+  .filter-group select,.filter-group input{font-size:0.7rem;padding:4px 8px;min-width:auto}
   .filter-group select{min-width:70px;padding-right:22px}
-  .checkbox-dropdown-btn{min-width:60px}
   .filter-right{margin-left:auto;gap:6px}
   .filter-badge{font-size:0.6rem;padding:3px 8px}
   .filter-clear{font-size:0.65rem}
@@ -353,7 +354,7 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
   <div class="dashboard-header">
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div>
-        <h1>EV Insights</h1>
+        <h1>IM6 EV Insights</h1>
         <p>Charging analytics & expense tracking</p>
         <div class="header-line"></div>
       </div>
@@ -370,25 +371,29 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
         <label>Period</label>
         <select id="filterMonth"><option value="all">All Time</option></select>
       </div>
+      <div class="filter-divider"></div>
       <div class="filter-group">
+        <label>Country</label>
         <div class="seg-group" id="filterCountryGroup">
           <button class="seg-btn active" data-value="all">All</button>
           <button class="seg-btn" data-value="Singapore">SG</button>
           <button class="seg-btn" data-value="Malaysia">MY</button>
         </div>
       </div>
+      <div class="filter-divider"></div>
       <div class="filter-group">
+        <label>Type</label>
         <div class="seg-group" id="filterTypeGroup">
           <button class="seg-btn active" data-value="all">AC/DC</button>
           <button class="seg-btn" data-value="AC">AC</button>
           <button class="seg-btn" data-value="DC">DC</button>
         </div>
       </div>
+      <div class="filter-divider"></div>
       <div class="filter-group">
-        <label>Charging Provider</label>
-        <div class="checkbox-dropdown" id="providerDropdown">
-          <button class="checkbox-dropdown-btn" id="providerBtn">All Providers</button>
-          <div class="checkbox-dropdown-list" id="providerList"></div>
+        <label>Provider</label>
+        <div id="providerPillsGroup">
+          <!-- populated by JS -->
         </div>
       </div>
       <div class="filter-right">
@@ -402,60 +407,91 @@ table.data-table tr.row-highlight{background:rgba(0,212,255,0.1)!important;trans
 <div class="container">
   <div class="zone-grid">
 
-    <!-- ZONE 2: KPI Strip -->
-    <div class="kpi-strip" id="kpiStrip">
-      <div class="kpi-card reveal" style="animation-delay:0.05s"><div class="kpi-label">Total Spend (SGD)</div><div class="kpi-value" id="kpiSpend">--</div><div class="kpi-delta neutral" id="kpiSpendDelta">--</div></div>
-      <div class="kpi-card reveal" style="animation-delay:0.1s"><div class="kpi-label">Total kWh Charged</div><div class="kpi-value" id="kpiKwh">--</div><div class="kpi-delta neutral" id="kpiKwhDelta">--</div></div>
-      <div class="kpi-card reveal" style="animation-delay:0.15s"><div class="kpi-label">Charging Sessions</div><div class="kpi-value" id="kpiSessions">--</div><div class="kpi-delta neutral" id="kpiSessionsDelta">--</div></div>
-      <div class="kpi-card reveal" style="animation-delay:0.2s"><div class="kpi-label">Avg Cost/kWh (SGD)</div><div class="kpi-value" id="kpiCostKwh">--</div><div class="kpi-delta neutral" id="kpiCostKwhDelta">--</div></div>
-      <div class="kpi-card reveal" style="animation-delay:0.25s"><div class="kpi-label">Est. Distance (km)</div><div class="kpi-value" id="kpiDist">--</div><div class="kpi-delta neutral" id="kpiDistDelta">--</div></div>
+    <!-- ZONE 2: Expenses by Category + KPI Strip -->
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:24px">
+      <div class="card reveal" style="animation-delay:0.05s">
+        <div style="text-align:center;font-size:0.75rem;color:var(--text3);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Expenses by Category</div>
+        <div class="chart-wrap" style="height:240px"><canvas id="chartCombinedExpenses"></canvas></div>
+      </div>
+      <div class="kpi-strip" id="kpiStrip">
+        <div class="kpi-card reveal" style="animation-delay:0.05s"><div class="kpi-label">Total Spend (SGD)</div><div class="kpi-value" id="kpiSpend">--</div><div class="kpi-delta neutral" id="kpiSpendDelta">--</div></div>
+        <div class="kpi-card reveal" style="animation-delay:0.1s"><div class="kpi-label">Total kWh Charged</div><div class="kpi-value" id="kpiKwh">--</div><div class="kpi-delta neutral" id="kpiKwhDelta">--</div></div>
+        <div class="kpi-card reveal" style="animation-delay:0.15s"><div class="kpi-label">Charging Sessions</div><div class="kpi-value" id="kpiSessions">--</div><div class="kpi-delta neutral" id="kpiSessionsDelta">--</div></div>
+        <div class="kpi-card reveal" style="animation-delay:0.2s"><div class="kpi-label">Avg Cost/kWh (SGD)</div><div class="kpi-value" id="kpiCostKwh">--</div><div class="kpi-delta neutral" id="kpiCostKwhDelta">--</div></div>
+        <div class="kpi-card reveal" style="animation-delay:0.25s"><div class="kpi-label">Est. Distance (km)</div><div class="kpi-value" id="kpiDist">--</div><div class="kpi-delta neutral" id="kpiDistDelta">--</div></div>
+        <div class="kpi-card reveal" style="animation-delay:0.3s"><div class="kpi-label">Total Savings (SGD)</div><div class="kpi-value" id="kpiSavings">--</div><div class="kpi-delta neutral" id="kpiSavingsDelta">--</div></div>
+        <div class="kpi-card reveal" style="animation-delay:0.35s"><div class="kpi-label">Gross Charging Spend</div><div class="kpi-value" id="kpiGross">--</div><div class="kpi-delta neutral" id="kpiGrossDelta">--</div></div>
+        <div class="kpi-card reveal" style="animation-delay:0.4s"><div class="kpi-label">Net Charging Spend</div><div class="kpi-value" id="kpiNet">--</div><div class="kpi-delta neutral" id="kpiNetDelta">--</div></div>
+      </div>
     </div>
 
-    <!-- ZONE 3: Cost Over Time -->
-    <div class="card reveal" style="animation-delay:0.3s">
-      <h2>Cost Over Time</h2>
-      <div class="chart-wrap h350"><canvas id="chartCostTime"></canvas></div>
+    <!-- ZONE 3: Two Donuts (50%) + Session Heatmap (50%) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <!-- Left: Two Donuts in Same Card with Shared Legend -->
+      <div class="card reveal" style="animation-delay:0.45s">
+        <div id="providerLegendContainer" style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;font-size:0.7rem;margin-bottom:16px;line-height:1.5"></div>
+        <div style="display:flex;justify-content:center;gap:32px">
+          <div style="display:flex;flex-direction:column;align-items:center;width:180px">
+            <div style="text-align:center;font-size:0.65rem;color:var(--text3);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Gross Spend by Provider</div>
+            <div style="width:180px;height:180px"><canvas id="chartProvider"></canvas></div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;width:180px">
+            <div style="text-align:center;font-size:0.65rem;color:var(--text3);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Sessions by Provider</div>
+            <div style="width:180px;height:180px"><canvas id="chartSessionsByProvider"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <!-- Right: Heatmap -->
+      <div class="card reveal" style="animation-delay:0.55s;display:flex;flex-direction:column">
+        <h2 style="margin-bottom:4px">Session Heatmap</h2>
+        <p style="font-size:0.7rem;color:var(--text3);margin-bottom:8px">Charging frequency by day of week and hour</p>
+        <div id="heatmapContainer" style="overflow-x:auto;flex:1;display:flex;align-items:center"></div>
+      </div>
     </div>
 
-    <!-- ZONE 4: Provider + Type -->
+    <!-- ZONE 4: Spend & Distance by Month (Side-by-side) -->
     <div class="zone-row-2">
-      <div class="card reveal" style="animation-delay:0.35s">
-        <h2>Spend by Provider</h2>
-        <div class="chart-wrap h300"><canvas id="chartProvider"></canvas></div>
-      </div>
-      <div class="card reveal" style="animation-delay:0.4s">
-        <h2>Sessions by Type</h2>
-        <div class="chart-wrap h300"><canvas id="chartType"></canvas></div>
-      </div>
-    </div>
-
-    <!-- ZONE 5: Charging Efficiency -->
-    <div class="card reveal" style="animation-delay:0.45s">
-      <h2>Charging Efficiency</h2>
-      <div class="chart-wrap h400"><canvas id="chartEfficiency"></canvas></div>
-    </div>
-
-    <!-- ZONE 6: Battery Behaviour -->
-    <div class="card reveal" style="animation-delay:0.5s">
-      <h2>Battery Behaviour</h2>
-      <div class="chart-wrap h350"><canvas id="chartBattery"></canvas></div>
-    </div>
-
-    <!-- ZONE 7: Heatmap + Other Expenses -->
-    <div class="zone-row-2">
-      <div class="card reveal" style="animation-delay:0.55s">
-        <h2>Session Heatmap</h2>
-        <div id="heatmapContainer" style="overflow-x:auto"></div>
-      </div>
       <div class="card reveal" style="animation-delay:0.6s">
-        <h2>Expenses by Category</h2>
-        <div class="chart-wrap h300"><canvas id="chartCombinedExpenses"></canvas></div>
+        <h2>Gross Charging Spend by Month</h2>
+        <div class="chart-wrap h350"><canvas id="chartSpendByMonth"></canvas></div>
+      </div>
+      <div class="card reveal" style="animation-delay:0.62s">
+        <h2>Est. Distance Travelled by Month</h2>
+        <div class="chart-wrap h350"><canvas id="chartDistanceByMonth"></canvas></div>
       </div>
     </div>
 
-    <!-- ZONE 8: Session Log Table -->
+    <!-- ZONE 4C: Provider × Location Charging Metrics -->
     <div class="card reveal" style="animation-delay:0.65s">
-      <h2>Session Log</h2>
+      <h2>Provider × Location Charging Metrics</h2>
+      <p style="font-size:0.7rem;color:var(--text3);margin-bottom:8px">Aggregated cost, speed, and efficiency metrics per provider-location pair</p>
+      <div id="providerLocationTableContainer" style="overflow-x:auto"></div>
+    </div>
+
+    <!-- ZONE 6-7: Battery Behaviour & Distribution (3:2 ratio) -->
+    <div style="display:grid;grid-template-columns:3fr 2fr;gap:24px">
+      <div class="card reveal" style="animation-delay:0.7s">
+        <h2>Battery Behaviour (Individual Sessions)</h2>
+        <p style="font-size:0.7rem;color:var(--text3);margin-bottom:4px">Battery level before and after each charging session over time</p>
+        <div class="chart-wrap h350"><canvas id="chartBattery"></canvas></div>
+      </div>
+      <div class="card reveal" style="animation-delay:0.75s">
+        <h2>Battery Increase Distribution</h2>
+        <p style="font-size:0.7rem;color:var(--text3);margin-bottom:4px">How much battery is typically gained per session</p>
+        <div class="chart-wrap h350"><canvas id="chartBatteryDistribution"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ZONE 7C: Energy Consumption Over Time -->
+    <div class="card reveal" style="animation-delay:0.8s">
+      <h2>Energy Consumption Over Time</h2>
+      <p style="font-size:0.7rem;color:var(--text3);margin-bottom:4px">Estimated energy usage between consecutive sessions, derived from battery drop and distance driven</p>
+      <div class="chart-wrap h350"><canvas id="chartEnergyConsumption"></canvas></div>
+    </div>
+
+    <!-- ZONE 8: EV Charging Sessions Table -->
+    <div class="card reveal" style="animation-delay:0.85s">
+      <h2>EV Charging Sessions</h2>
       <div class="table-controls">
         <input type="text" id="tableSearch" placeholder="Search location or provider...">
         <select id="tablePageSize">
@@ -495,7 +531,7 @@ loadingMsg.textContent = 'Loading data...';
 document.body.appendChild(loadingMsg);
 
 // DOM element references (initialized on page load)
-let monthSelect, providerList, providerBtn;
+let monthSelect;
 
 // ===================== CSV PARSER =====================
 function parseCSV(text) {
@@ -570,7 +606,7 @@ function processData(csvText) {
         kwh, provider: (r['Charging Provider'] || '').trim(),
         plan: (r['Subscription Plan'] || '').trim(),
         currency, grossCost: cost, rebate, netCost, idleFees: idle,
-        costPerKwh: kwh > 0 ? netCost / kwh : 0,
+        costPerKwh: kwh > 0 ? cost / kwh : 0,
         chargingSpeedKwhPerHour: durationHours > 0 ? kwh / durationHours : 0,
         batteryIncreaseRatePerHour: durationHours > 0 ? (battAfter - battBefore) / durationHours : 0,
         paidBy: (r['Payment By'] || '').trim(),
@@ -600,7 +636,7 @@ function processData(csvText) {
           kwh, provider: (r['Charging Provider'] || '').trim(),
           plan: (r['Subscription Plan'] || '').trim(),
           currency: (r['Currency'] || 'SGD').trim(), grossCost: amt, rebate: parseNum(r['Rebate, if any'] || 0), netCost, idleFees: parseNum(r['Idle Fees'] || 0),
-          costPerKwh: kwh > 0 ? netCost / kwh : 0,
+          costPerKwh: kwh > 0 ? amt / kwh : 0,
           chargingSpeedKwhPerHour: durationHours > 0 ? kwh / durationHours : 0,
           batteryIncreaseRatePerHour: durationHours > 0 ? (battAfter - battBefore) / durationHours : 0,
           paidBy: (r['Payment By'] || '').trim(),
@@ -623,6 +659,34 @@ function processData(csvText) {
     const d = chargingSessions[i].odometer - chargingSessions[i-1].odometer;
     chargingSessions[i].distance = d > 0 ? d : 0;
   }
+
+  // Compute energy consumption metrics between consecutive sessions
+  for (let i = 0; i < chargingSessions.length - 1; i++) {
+    const cur = chargingSessions[i];
+    const next = chargingSessions[i + 1];
+    const distToNext = next.distance; // odometer difference
+    const battIncrease = cur.battAfter - cur.battBefore;
+    const battDrop = cur.battAfter - next.battBefore;
+
+    if (distToNext > 0 && battIncrease > 0 && battDrop >= 0) {
+      const kwhPerPercent = cur.kwh / battIncrease;
+      const kwhConsumed = kwhPerPercent * battDrop;
+      cur.energyBattPer100km = battDrop / distToNext * 100;
+      cur.energyKwhPer100km = kwhConsumed / distToNext * 100;
+      cur.distToNext = distToNext;
+      cur.battDrop = battDrop;
+      cur.kwhConsumed = kwhConsumed;
+    } else {
+      cur.energyBattPer100km = null;
+      cur.energyKwhPer100km = null;
+    }
+  }
+  // Last session has no "next", so no consumption data
+  if (chargingSessions.length > 0) {
+    const last = chargingSessions[chargingSessions.length - 1];
+    last.energyBattPer100km = null;
+    last.energyKwhPer100km = null;
+  }
 }
 
 // ===================== FILTERS =====================
@@ -631,8 +695,7 @@ function initializeFilters() {
   allMonths = [...new Set([...chargingSessions.map(s => s.monthKey),...otherExpenses.map(e => e.monthKey)])].filter(Boolean).sort();
 
   monthSelect = document.getElementById('filterMonth');
-  providerList = document.getElementById('providerList');
-  providerBtn = document.getElementById('providerBtn');
+  const providerPillsGroup = document.getElementById('providerPillsGroup');
   monthSelect.innerHTML = '<option value="all">All Time</option>';
   allMonths.forEach(m => {
     const [y, mo] = m.split('-');
@@ -641,18 +704,42 @@ function initializeFilters() {
     monthSelect.appendChild(opt);
   });
 
-  providerList.innerHTML = '';
-  allProviders.forEach(p => {
-    const lbl = document.createElement('label');
-    lbl.innerHTML = `<input type="checkbox" value="${p}" checked> ${p}`;
-    providerList.appendChild(lbl);
+  // Create provider pills
+  providerPillsGroup.innerHTML = '';
+  // Add "All" pill
+  const allPill = document.createElement('button');
+  allPill.className = 'provider-pill active';
+  allPill.textContent = 'All';
+  allPill.dataset.value = 'all';
+  allPill.addEventListener('click', () => {
+    const isAllActive = allPill.classList.contains('active');
+    if (isAllActive) {
+      // Toggle all pills off
+      allPill.classList.remove('active');
+      providerPillsGroup.querySelectorAll('.provider-pill:not([data-value="all"])').forEach(p => p.classList.remove('active'));
+    } else {
+      // Toggle all pills on
+      allPill.classList.add('active');
+      providerPillsGroup.querySelectorAll('.provider-pill:not([data-value="all"])').forEach(p => p.classList.add('active'));
+    }
+    crossFilterProvider = null;
+    updateAll();
   });
-  if (!providerBtn._listenerAdded) {
-    providerBtn.addEventListener('click', e => { e.stopPropagation(); document.getElementById('providerList').classList.toggle('open'); });
-    document.addEventListener('click', () => document.getElementById('providerList').classList.remove('open'));
-    document.getElementById('providerList').addEventListener('click', e => e.stopPropagation());
-    providerBtn._listenerAdded = true;
-  }
+  providerPillsGroup.appendChild(allPill);
+
+  // Add individual provider pills
+  allProviders.forEach(p => {
+    const pill = document.createElement('button');
+    pill.className = 'provider-pill active';
+    pill.textContent = p;
+    pill.dataset.value = p;
+    pill.addEventListener('click', () => {
+      pill.classList.toggle('active');
+      crossFilterProvider = null;
+      updateAll();
+    });
+    providerPillsGroup.appendChild(pill);
+  });
 }
 
 let crossFilterProvider = null;
@@ -662,12 +749,8 @@ function getFilters() {
   const month = monthSelect.value;
   const country = document.querySelector('#filterCountryGroup .seg-btn.active').dataset.value;
   const ctype = document.querySelector('#filterTypeGroup .seg-btn.active').dataset.value;
-  const providerChecks = providerList.querySelectorAll('input[type=checkbox]');
-  const selectedProviders = [...providerChecks].filter(c => c.checked).map(c => c.value);
-  if (selectedProviders.length === allProviders.length) providerBtn.textContent = 'All Providers';
-  else if (selectedProviders.length === 0) providerBtn.textContent = 'None';
-  else if (selectedProviders.length === 1) providerBtn.textContent = selectedProviders[0];
-  else providerBtn.textContent = `${selectedProviders.length} selected`;
+  const providerPillsGroup = document.getElementById('providerPillsGroup');
+  const selectedProviders = [...providerPillsGroup.querySelectorAll('.provider-pill.active:not([data-value="all"])')].map(p => p.dataset.value);
   return { month, country, ctype, selectedProviders };
 }
 function filterSessions(f) {
@@ -705,12 +788,12 @@ function clearFilters() {
   monthSelect.value = 'all';
   document.querySelectorAll('#filterCountryGroup .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.value === 'all'));
   document.querySelectorAll('#filterTypeGroup .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.value === 'all'));
-  providerList.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = true);
+  document.getElementById('providerPillsGroup').querySelectorAll('.provider-pill').forEach(p => p.classList.add('active'));
   crossFilterProvider = null; crossFilterType = null; updateAll();
 }
 
 // ===================== CHART CONFIG =====================
-let chartCostTime, chartProvider, chartTypeDonut, chartEfficiency, chartBattery, chartExpenses;
+let chartSpendByMonth, chartDistanceByMonth, chartProvider, chartSessionsByProvider, chartBattery, chartBatteryDistribution, chartExpenses, chartCombinedExpenses, chartEnergyConsumption;
 const chartAnimOpts = { duration: 600, easing: 'easeInOutQuart' };
 
 // Dark theme defaults
@@ -748,6 +831,14 @@ function monthLabel(key) {
   return new Date(+y, +m-1).toLocaleString('en', { month: 'short', year: 'numeric' });
 }
 
+// Formatting helpers
+function fmtCurrency(v, dp=2) {
+  return '$' + v.toLocaleString('en-SG', {minimumFractionDigits:dp,maximumFractionDigits:dp});
+}
+function fmtNumber(v, dp=2) {
+  return v.toLocaleString('en-SG', {minimumFractionDigits:dp,maximumFractionDigits:dp});
+}
+
 // ===================== KPI UPDATE =====================
 function updateKPIs(sessions, expenses, filters) {
   const totalNetCharge = sessions.reduce((s, r) => s + r.netCost, 0);
@@ -756,14 +847,21 @@ function updateKPIs(sessions, expenses, filters) {
   const totalSpend = totalNetCharge + totalIdle + totalExpense;
   const totalKwh = sessions.reduce((s, r) => s + r.kwh, 0);
   const numSessions = sessions.length;
-  const avgCostKwh = totalKwh > 0 ? totalNetCharge / totalKwh : 0;
+  const totalGrossCharge = sessions.reduce((s, r) => s + r.grossCost, 0);
+  const avgCostKwh = totalKwh > 0 ? totalGrossCharge / totalKwh : 0;
   const totalDist = sessions.reduce((s, r) => s + r.distance, 0);
 
-  document.getElementById('kpiSpend').textContent = '$' + totalSpend.toFixed(2);
-  document.getElementById('kpiKwh').textContent = totalKwh.toFixed(1);
+  document.getElementById('kpiSpend').textContent = fmtCurrency(totalSpend, 2);
+  document.getElementById('kpiKwh').textContent = fmtNumber(totalKwh, 2);
   document.getElementById('kpiSessions').textContent = numSessions;
-  document.getElementById('kpiCostKwh').textContent = '$' + avgCostKwh.toFixed(2);
-  document.getElementById('kpiDist').textContent = totalDist.toLocaleString();
+  document.getElementById('kpiCostKwh').textContent = fmtCurrency(avgCostKwh, 4);
+  document.getElementById('kpiDist').textContent = fmtNumber(totalDist, 0);
+
+  // New KPIs
+  const totalRebates = sessions.reduce((s, r) => s + r.rebate, 0);
+  document.getElementById('kpiSavings').textContent = fmtCurrency(totalRebates, 2);
+  document.getElementById('kpiGross').textContent = fmtCurrency(totalGrossCharge, 2);
+  document.getElementById('kpiNet').textContent = fmtCurrency(totalNetCharge, 2);
 
   const prevKey = filters.month !== 'all' ? getPrevMonthKey(filters.month) : null;
   if (prevKey) {
@@ -773,7 +871,8 @@ function updateKPIs(sessions, expenses, filters) {
     setDelta('kpiSpendDelta', totalSpend, pNC+pI+pET, true);
     setDelta('kpiKwhDelta', totalKwh, pS.reduce((s,r)=>s+r.kwh,0), false);
     setDelta('kpiSessionsDelta', numSessions, pS.length, false);
-    const pAvg = pS.reduce((s,r)=>s+r.kwh,0) > 0 ? pNC/pS.reduce((s,r)=>s+r.kwh,0) : 0;
+    const pGrossC = pS.reduce((s,r)=>s+r.grossCost,0);
+    const pAvg = pS.reduce((s,r)=>s+r.kwh,0) > 0 ? pGrossC/pS.reduce((s,r)=>s+r.kwh,0) : 0;
     setDelta('kpiCostKwhDelta', avgCostKwh, pAvg, true);
     setDelta('kpiDistDelta', totalDist, pS.reduce((s,r)=>s+r.distance,0), false);
   } else {
@@ -787,12 +886,17 @@ function updateKPIs(sessions, expenses, filters) {
       setDelta('kpiSpendDelta',cSpend,pSpend,true,sfx);
       setDelta('kpiKwhDelta',cS.reduce((s,r)=>s+r.kwh,0),pS.reduce((s,r)=>s+r.kwh,0),false,sfx);
       setDelta('kpiSessionsDelta',cS.length,pS.length,false,sfx);
-      const cA=cS.reduce((s,r)=>s+r.kwh,0)>0?cS.reduce((s,r)=>s+r.netCost,0)/cS.reduce((s,r)=>s+r.kwh,0):0;
-      const pA=pS.reduce((s,r)=>s+r.kwh,0)>0?pS.reduce((s,r)=>s+r.netCost,0)/pS.reduce((s,r)=>s+r.kwh,0):0;
+      const cA=cS.reduce((s,r)=>s+r.kwh,0)>0?cS.reduce((s,r)=>s+r.grossCost,0)/cS.reduce((s,r)=>s+r.kwh,0):0;
+      const pA=pS.reduce((s,r)=>s+r.kwh,0)>0?pS.reduce((s,r)=>s+r.grossCost,0)/pS.reduce((s,r)=>s+r.kwh,0):0;
       setDelta('kpiCostKwhDelta',cA,pA,true,sfx);
       setDelta('kpiDistDelta',cS.reduce((s,r)=>s+r.distance,0),pS.reduce((s,r)=>s+r.distance,0),false,sfx);
+      const cRebates = cS.reduce((s,r)=>s+r.rebate,0), pRebates = pS.reduce((s,r)=>s+r.rebate,0);
+      setDelta('kpiSavingsDelta',cRebates,pRebates,false,sfx);
+      const cGross = cS.reduce((s,r)=>s+r.grossCost,0), pGross = pS.reduce((s,r)=>s+r.grossCost,0);
+      setDelta('kpiGrossDelta',cGross,pGross,true,sfx);
+      setDelta('kpiNetDelta',cS.reduce((s,r)=>s+r.netCost,0),pS.reduce((s,r)=>s+r.netCost,0),true,sfx);
     } else {
-      ['kpiSpendDelta','kpiKwhDelta','kpiSessionsDelta','kpiCostKwhDelta','kpiDistDelta'].forEach(id => {
+      ['kpiSpendDelta','kpiKwhDelta','kpiSessionsDelta','kpiCostKwhDelta','kpiDistDelta','kpiSavingsDelta','kpiGrossDelta','kpiNetDelta'].forEach(id => {
         const el=document.getElementById(id); el.textContent='--'; el.className='kpi-delta neutral';
       });
     }
@@ -809,44 +913,94 @@ function setDelta(elId, current, previous, lowerIsBetter, suffix='') {
   el.className = `kpi-delta ${pct===0?'neutral':isGood?'up':'down'}`;
 }
 
-// ===================== ZONE 3: COST OVER TIME =====================
-function updateCostTimeChart(sessions, expenses) {
+// ===================== ZONE 4: SPEND & DISTANCE BY MONTH =====================
+function updateSpendByMonthChart(sessions) {
   const months = {};
-  sessions.forEach(s => { if (!s.monthKey) return; if (!months[s.monthKey]) months[s.monthKey]={net:0,idle:0,other:0}; months[s.monthKey].net+=s.netCost; months[s.monthKey].idle+=s.idleFees; });
-  expenses.forEach(e => { if (!e.monthKey) return; if (!months[e.monthKey]) months[e.monthKey]={net:0,idle:0,other:0}; months[e.monthKey].other+=e.amount; });
+  sessions.forEach(s => {
+    if (!s.monthKey) return;
+    if (!months[s.monthKey]) months[s.monthKey] = {gross:0, count:0};
+    months[s.monthKey].gross += s.grossCost;
+    months[s.monthKey].count += 1;
+  });
   const sortedKeys = Object.keys(months).sort();
   const labels = sortedKeys.map(monthLabel);
 
-  if (chartCostTime) chartCostTime.destroy();
-  chartCostTime = new Chart(document.getElementById('chartCostTime'), {
+  if (chartSpendByMonth) chartSpendByMonth.destroy();
+  chartSpendByMonth = new Chart(document.getElementById('chartSpendByMonth'), {
     type:'bar',
     data:{
       labels,
       datasets:[
-        {label:'Net Charging',data:sortedKeys.map(k=>months[k].net),backgroundColor:'rgba(0,212,255,0.7)',stack:'stack',borderRadius:6,borderSkipped:false},
-        {label:'Idle Fees',data:sortedKeys.map(k=>months[k].idle),backgroundColor:'rgba(255,176,32,0.7)',stack:'stack',borderRadius:6,borderSkipped:false},
-        {label:'Other Expenses',data:sortedKeys.map(k=>months[k].other),backgroundColor:'rgba(148,163,184,0.3)',stack:'stack',borderRadius:6,borderSkipped:false}
+        {label:'Gross Spend (SGD)',data:sortedKeys.map(k=>months[k].gross),backgroundColor:'rgba(0,212,255,0.7)',borderRadius:6,borderSkipped:false,yAxisID:'y'},
+        {label:'Sessions',data:sortedKeys.map(k=>months[k].count),backgroundColor:'rgba(255,176,32,0.6)',borderRadius:6,borderSkipped:false,yAxisID:'y1'}
       ]
     },
     options:{
       responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,
-      plugins:{tooltip:{...tooltipOpts,callbacks:{label:ctx=>`${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`}},legend:legendOpts},
+      plugins:{
+        tooltip:{...tooltipOpts,callbacks:{label:ctx=>ctx.dataset.yAxisID==='y'?fmtCurrency(ctx.parsed.y,2):`${ctx.parsed.y} sessions`}},
+        legend:legendOpts
+      },
       scales:{
         x:{grid:{display:false},ticks:{font:{family:"'Outfit'",size:11}}},
-        y:{beginAtZero:true,title:{display:true,text:'SGD',font:{family:"'Outfit'",size:11}},ticks:{font:{family:"'JetBrains Mono'",size:10}},grid:{color:'rgba(148,163,184,0.06)'}}
+        y:{beginAtZero:true,position:'left',title:{display:true,text:'SGD (Gross)',font:{family:"'Outfit'",size:11}},ticks:{font:{family:"'JetBrains Mono'",size:10}},grid:{color:'rgba(148,163,184,0.06)'}},
+        y1:{beginAtZero:true,position:'right',title:{display:true,text:'Sessions',font:{family:"'Outfit'",size:11}},ticks:{font:{family:"'JetBrains Mono'",size:10},stepSize:1},grid:{drawOnChartArea:false}}
       }
     }
   });
 }
 
-// ===================== ZONE 4: DONUTS =====================
+function updateDistanceByMonthChart(sessions) {
+  const months = {};
+  sessions.forEach(s => {
+    if (!s.monthKey) return;
+    if (!months[s.monthKey]) months[s.monthKey] = 0;
+    months[s.monthKey] += s.distance || 0;
+  });
+  const sortedKeys = Object.keys(months).sort();
+  const labels = sortedKeys.map(monthLabel);
+
+  if (chartDistanceByMonth) chartDistanceByMonth.destroy();
+  chartDistanceByMonth = new Chart(document.getElementById('chartDistanceByMonth'), {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Est. Distance Travelled (km)',data:sortedKeys.map(k=>months[k]),backgroundColor:'rgba(52,211,153,0.7)',borderRadius:6,borderSkipped:false}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,
+      plugins:{
+        tooltip:{...tooltipOpts,callbacks:{label:ctx=>`${fmtNumber(ctx.parsed.y, 0)} km`}},
+        legend:legendOpts
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{family:"'Outfit'",size:11}}},
+        y:{beginAtZero:true,title:{display:true,text:'Distance (km)',font:{family:"'Outfit'",size:11}},ticks:{font:{family:"'JetBrains Mono'",size:10}},grid:{color:'rgba(148,163,184,0.06)'}}
+      }
+    }
+  });
+}
+
+// ===================== ZONE 5: DONUTS =====================
 const providerColors = ['#00D4FF','#FFB020','#34D399','#FF6B6B','#A78BFA','#38BDF8','#94A3B8'];
 
 function updateProviderDonut(sessions) {
   const byP = {};
-  sessions.forEach(s => { if(!byP[s.provider]) byP[s.provider]={total:0,sessions:0,kwh:0}; byP[s.provider].total+=s.netCost; byP[s.provider].sessions++; byP[s.provider].kwh+=s.kwh; });
+  sessions.forEach(s => { if(!byP[s.provider]) byP[s.provider]={total:0,sessions:0,kwh:0}; byP[s.provider].total+=s.grossCost; byP[s.provider].sessions++; byP[s.provider].kwh+=s.kwh; });
   const providers = Object.keys(byP).sort((a,b)=>byP[b].total-byP[a].total);
-  const totalNet = sessions.reduce((s,r)=>s+r.netCost,0);
+  const totalGross = sessions.reduce((s,r)=>s+r.grossCost,0);
+
+  // Update shared legend
+  const legendContainer = document.getElementById('providerLegendContainer');
+  if (legendContainer) {
+    let legendHtml = '';
+    providers.forEach((p, i) => {
+      legendHtml += `<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;border-radius:2px;background:${providerColors[i % providerColors.length]}"></span>${p}</span>`;
+    });
+    legendContainer.innerHTML = legendHtml;
+  }
 
   if (chartProvider) chartProvider.destroy();
   chartProvider = new Chart(document.getElementById('chartProvider'), {
@@ -855,69 +1009,164 @@ function updateProviderDonut(sessions) {
     options:{
       responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,cutout:'62%',
       plugins:{
-        legend:legendOpts,
-        tooltip:{...tooltipOpts,callbacks:{label:ctx=>{const d=byP[ctx.label];return[`$${d.total.toFixed(2)}`,`${d.sessions} sessions`,`${(d.kwh/d.sessions).toFixed(1)} kWh avg`];}}}
+        legend:{display:false},
+        tooltip:{...tooltipOpts,callbacks:{label:ctx=>{const d=byP[ctx.label];return[fmtCurrency(d.total,2),`${d.sessions} sessions`,`${(d.kwh/d.sessions).toFixed(1)} kWh avg`];}}}
       },
       onClick:(e,el)=>{if(el.length>0){const i=el[0].index;crossFilterProvider=crossFilterProvider===providers[i]?null:providers[i];crossFilterType=null;updateAll();}}
     },
-    plugins:[{id:'centerText',afterDraw(chart){const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.font="500 11px 'Outfit'";ctx.fillStyle='#64748B';ctx.textAlign='center';ctx.fillText('TOTAL',cx,cy-10);ctx.font="600 20px 'JetBrains Mono'";ctx.fillStyle='#F1F5F9';ctx.fillText('$'+totalNet.toFixed(0),cx,cy+14);ctx.restore();}}]
+    plugins:[
+      {id:'centerText',afterDraw(chart){const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.font="600 16px 'JetBrains Mono'";ctx.fillStyle=document.body.classList.contains('light')?'#0F172A':'#F1F5F9';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(fmtCurrency(totalGross,0),cx,cy);ctx.restore();}}
+    ]
   });
 }
 
-function updateTypeDonut(sessions) {
-  const byT = {};
-  sessions.forEach(s => { if(!byT[s.type]) byT[s.type]={count:0,kwh:0,cost:0}; byT[s.type].count++; byT[s.type].kwh+=s.kwh; byT[s.type].cost+=s.netCost; });
-  const types = Object.keys(byT);
-  const totalS = sessions.length;
-  const colors = {AC:'#00D4FF',DC:'#FF6B6B'};
+function updateSessionsByProviderDonut(sessions) {
+  const byP = {};
+  sessions.forEach(s => { if(!byP[s.provider]) byP[s.provider]={count:0,kwh:0}; byP[s.provider].count++; byP[s.provider].kwh+=s.kwh; });
+  const providers = Object.keys(byP).sort((a,b)=>byP[b].count-byP[a].count);
+  const totalSessions = sessions.length;
 
-  if (chartTypeDonut) chartTypeDonut.destroy();
-  chartTypeDonut = new Chart(document.getElementById('chartType'), {
+  if (chartSessionsByProvider) chartSessionsByProvider.destroy();
+  chartSessionsByProvider = new Chart(document.getElementById('chartSessionsByProvider'), {
     type:'doughnut',
-    data:{labels:types,datasets:[{data:types.map(t=>byT[t].count),backgroundColor:types.map(t=>colors[t]||'#94A3B8'),borderWidth:0,hoverOffset:8,borderRadius:4}]},
+    data:{labels:providers,datasets:[{data:providers.map(p=>byP[p].count),backgroundColor:providerColors.slice(0,providers.length),borderWidth:0,hoverOffset:8,borderRadius:4}]},
     options:{
       responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,cutout:'62%',
       plugins:{
-        legend:legendOpts,
-        tooltip:{...tooltipOpts,callbacks:{label:ctx=>{const d=byT[ctx.label];return[`${d.count} sessions`,`${d.kwh.toFixed(1)} kWh`,`$${(d.cost/d.count).toFixed(2)} avg`];}}}
+        legend:{display:false},
+        tooltip:{...tooltipOpts,callbacks:{label:ctx=>{const d=byP[ctx.label];const pct=(d.count/totalSessions*100).toFixed(0);return[`${d.count} sessions`,`${pct}% of total`,`${(d.kwh/d.count).toFixed(1)} kWh avg`];}}}
       },
-      onClick:(e,el)=>{if(el.length>0){const i=el[0].index;crossFilterType=crossFilterType===types[i]?null:types[i];crossFilterProvider=null;updateAll();}}
+      onClick:(e,el)=>{if(el.length>0){const i=el[0].index;crossFilterProvider=crossFilterProvider===providers[i]?null:providers[i];crossFilterType=null;updateAll();}}
     },
-    plugins:[{id:'ct2',afterDraw(chart){const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.font="500 11px 'Outfit'";ctx.fillStyle='#64748B';ctx.textAlign='center';ctx.fillText('SESSIONS',cx,cy-10);ctx.font="600 20px 'JetBrains Mono'";ctx.fillStyle='#F1F5F9';ctx.fillText(totalS,cx,cy+14);ctx.restore();}}]
+    plugins:[
+      {id:'centerText',afterDraw(chart){const{ctx,chartArea:{left,right,top,bottom}}=chart;const cx=(left+right)/2,cy=(top+bottom)/2;ctx.save();ctx.font="600 16px 'JetBrains Mono'";ctx.fillStyle=document.body.classList.contains('light')?'#0F172A':'#F1F5F9';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(totalSessions,cx,cy);ctx.restore();}}
+    ]
   });
 }
 
-// ===================== ZONE 5: SCATTER =====================
-function updateScatter(sessions) {
-  let filtered = sessions;
-  if (crossFilterProvider) filtered = filtered.filter(s=>s.provider===crossFilterProvider);
-  if (crossFilterType) filtered = filtered.filter(s=>s.type===crossFilterType);
-  const maxCost = Math.max(...filtered.map(s=>s.netCost),1);
-  const pointData = filtered.map(s=>({x:s.duration,y:s.kwh,r:4+(s.netCost/maxCost)*12,session:s,origIndex:chargingSessions.indexOf(s)}));
-  const acData = pointData.filter(d=>d.session.type==='AC');
-  const dcData = pointData.filter(d=>d.session.type==='DC');
-
-  if (chartEfficiency) chartEfficiency.destroy();
-  chartEfficiency = new Chart(document.getElementById('chartEfficiency'), {
-    type:'bubble',
-    data:{datasets:[
-      {label:'AC',data:acData,backgroundColor:'rgba(0,212,255,0.35)',borderColor:'rgba(0,212,255,0.8)',borderWidth:1.5,hoverBackgroundColor:'rgba(0,212,255,0.6)'},
-      {label:'DC',data:dcData,backgroundColor:'rgba(255,107,107,0.35)',borderColor:'rgba(255,107,107,0.8)',borderWidth:1.5,hoverBackgroundColor:'rgba(255,107,107,0.6)'}
-    ]},
-    options:{
-      responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,
-      plugins:{
-        legend:legendOpts,
-        tooltip:{...tooltipOpts,callbacks:{label:ctx=>{const s=ctx.raw.session;const d=s.startDate?s.startDate.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'';return[d,s.location,s.provider,`${s.duration.toFixed(0)} min`,`${s.kwh.toFixed(1)} kWh`,`$${s.netCost.toFixed(2)}`,`$${s.costPerKwh.toFixed(2)}/kWh`];}}}
-      },
-      scales:{
-        x:{title:{display:true,text:'Duration (min)',font:{family:"'Outfit'",size:12}},grid:{color:'rgba(148,163,184,0.06)'},ticks:{font:{family:"'JetBrains Mono'",size:10}}},
-        y:{title:{display:true,text:'Total kWh',font:{family:"'Outfit'",size:12}},grid:{color:'rgba(148,163,184,0.06)'},ticks:{font:{family:"'JetBrains Mono'",size:10}}}
-      },
-      onClick:(e,el)=>{if(el.length>0){const ds=el[0].datasetIndex,idx=el[0].index;highlightTableRow(chartEfficiency.data.datasets[ds].data[idx].origIndex);}}
-    },
-    plugins:[{id:'warnLabels',afterDraw(chart){const{ctx}=chart;chart.data.datasets.forEach((ds,di)=>{ds.data.forEach((pt,pi)=>{if(pt.session.costPerKwh>0.80){const meta=chart.getDatasetMeta(di);const el=meta.data[pi];if(el){ctx.save();ctx.font="11px 'Outfit'";ctx.fillStyle='#FF6B6B';ctx.textAlign='center';ctx.fillText('\u26A0',el.x,el.y-el.options.radius-5);ctx.restore();}}});});}}]
+function updateProviderLocationTable(sessions) {
+  const byLocProvider = {};
+  sessions.forEach(s => {
+    if (!byLocProvider[s.location]) byLocProvider[s.location] = {};
+    if (!byLocProvider[s.location][s.provider]) {
+      byLocProvider[s.location][s.provider] = { totalCost: 0, totalKwh: 0, sessions: 0, avgSpeed: 0, avgBatteryRate: 0 };
+    }
+    byLocProvider[s.location][s.provider].totalCost += s.grossCost;
+    byLocProvider[s.location][s.provider].totalKwh += s.kwh;
+    byLocProvider[s.location][s.provider].sessions++;
+    byLocProvider[s.location][s.provider].avgSpeed += s.chargingSpeedKwhPerHour || 0;
+    byLocProvider[s.location][s.provider].avgBatteryRate += s.batteryIncreaseRatePerHour || 0;
   });
+
+  // Normalize the averages
+  Object.keys(byLocProvider).forEach(loc => {
+    Object.keys(byLocProvider[loc]).forEach(prov => {
+      const m = byLocProvider[loc][prov];
+      if (m.sessions > 0) {
+        m.avgSpeed /= m.sessions;
+        m.avgBatteryRate /= m.sessions;
+      }
+    });
+  });
+
+  const rows = [];
+  Object.entries(byLocProvider).forEach(([location, providerMap]) => {
+    Object.entries(providerMap).forEach(([provider, metrics]) => {
+      const avgKwhPerSession = metrics.sessions > 0 ? metrics.totalKwh / metrics.sessions : 0;
+      const avgCostPerKwh = metrics.totalKwh > 0 ? metrics.totalCost / metrics.totalKwh : 0;
+      rows.push({
+        provider,
+        location,
+        sessions: metrics.sessions,
+        avgKwhPerSession,
+        totalKwh: metrics.totalKwh,
+        avgCostPerKwh,
+        avgSpeed: metrics.avgSpeed,
+        avgBatteryRate: metrics.avgBatteryRate,
+        totalSpent: metrics.totalCost
+      });
+    });
+  });
+
+  rows.sort((a, b) => a.provider.localeCompare(b.provider) || a.location.localeCompare(b.location));
+  window.providerLocationRows = rows;
+  window.providerLocationSortCol = 'provider';
+  window.providerLocationSortAsc = true;
+
+  const container = document.getElementById('providerLocationTableContainer');
+  let html = '<table class="data-table" style="font-size:0.75rem;width:100%;border-collapse:collapse"><thead><tr>';
+  html += '<th onclick="sortProviderLocationTable(\'provider\')" style="padding:6px 4px;text-align:left">Provider</th>';
+  html += '<th onclick="sortProviderLocationTable(\'location\')" style="padding:6px 4px;text-align:left">Location</th>';
+  html += '<th onclick="sortProviderLocationTable(\'sessions\')" style="padding:6px 4px;text-align:center">Sessions</th>';
+  html += '<th onclick="sortProviderLocationTable(\'totalKwh\')" style="padding:6px 4px;text-align:center">Total kWh</th>';
+  html += '<th onclick="sortProviderLocationTable(\'avgCostPerKwh\')" style="padding:6px 4px;text-align:center">Avg $/kWh</th>';
+  html += '<th onclick="sortProviderLocationTable(\'avgSpeed\')" style="padding:6px 4px;text-align:center">Speed (kWh/h)</th>';
+  html += '<th onclick="sortProviderLocationTable(\'avgBatteryRate\')" style="padding:6px 4px;text-align:center">Batt Rate (%/h)</th>';
+  html += '<th onclick="sortProviderLocationTable(\'totalSpent\')" style="padding:6px 4px;text-align:right">Spend</th>';
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(row => {
+    html += '<tr style="border-bottom:1px solid var(--border)">';
+    html += `<td style="padding:6px 4px">${row.provider}</td>`;
+    html += `<td style="padding:6px 4px">${row.location}</td>`;
+    html += `<td style="padding:6px 4px;text-align:center">${row.sessions}</td>`;
+    html += `<td style="padding:6px 4px;text-align:center">${fmtNumber(row.totalKwh, 1)}</td>`;
+    html += `<td style="padding:6px 4px;text-align:center">${fmtCurrency(row.avgCostPerKwh, 4)}</td>`;
+    html += `<td style="padding:6px 4px;text-align:center">${fmtNumber(row.avgSpeed, 2)}</td>`;
+    html += `<td style="padding:6px 4px;text-align:center">${fmtNumber(row.avgBatteryRate, 1)}</td>`;
+    html += `<td style="padding:6px 4px;text-align:right">${fmtCurrency(row.totalSpent, 2)}</td>`;
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function sortProviderLocationTable(col) {
+  const rows = window.providerLocationRows || [];
+  const isCurrentCol = window.providerLocationSortCol === col;
+  const newAsc = isCurrentCol ? !window.providerLocationSortAsc : true;
+
+  rows.sort((a, b) => {
+    const aVal = a[col];
+    const bVal = b[col];
+    if (typeof aVal === 'string') {
+      return newAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    } else {
+      return newAsc ? aVal - bVal : bVal - aVal;
+    }
+  });
+
+  window.providerLocationSortCol = col;
+  window.providerLocationSortAsc = newAsc;
+
+  const container = document.getElementById('providerLocationTableContainer');
+  let html = '<table class="data-table" style="font-size:0.75rem;width:100%;border-collapse:collapse"><thead><tr>';
+  html += '<th onclick="sortProviderLocationTable(\'provider\')" style="padding:6px 4px;text-align:left">Provider</th>';
+  html += '<th onclick="sortProviderLocationTable(\'location\')" style="padding:6px 4px;text-align:left">Location</th>';
+  html += '<th onclick="sortProviderLocationTable(\'sessions\')" style="padding:6px 4px;text-align:center">Sessions</th>';
+  html += '<th onclick="sortProviderLocationTable(\'totalKwh\')" style="padding:6px 4px;text-align:center">Total kWh</th>';
+  html += '<th onclick="sortProviderLocationTable(\'avgCostPerKwh\')" style="padding:6px 4px;text-align:center">Avg $/kWh</th>';
+  html += '<th onclick="sortProviderLocationTable(\'avgSpeed\')" style="padding:6px 4px;text-align:center">Speed (kWh/h)</th>';
+  html += '<th onclick="sortProviderLocationTable(\'avgBatteryRate\')" style="padding:6px 4px;text-align:center">Batt Rate (%/h)</th>';
+  html += '<th onclick="sortProviderLocationTable(\'totalSpent\')" style="padding:6px 4px;text-align:right">Spend</th>';
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(row => {
+    html += '<tr style="border-bottom:1px solid var(--border)">';
+    html += `<td style="padding:6px 4px">${row.provider}</td>`;
+    html += `<td style="padding:6px 4px">${row.location}</td>`;
+    html += `<td style="padding:6px 4px;text-align:center">${row.sessions}</td>`;
+    html += `<td style="padding:6px 4px;text-align:center">${fmtNumber(row.totalKwh, 1)}</td>`;
+    html += `<td style="padding:6px 4px;text-align:center">${fmtCurrency(row.avgCostPerKwh, 4)}</td>`;
+    html += `<td style="padding:6px 4px;text-align:center">${fmtNumber(row.avgSpeed, 2)}</td>`;
+    html += `<td style="padding:6px 4px;text-align:center">${fmtNumber(row.avgBatteryRate, 1)}</td>`;
+    html += `<td style="padding:6px 4px;text-align:right">${fmtCurrency(row.totalSpent, 2)}</td>`;
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
 }
 
 // ===================== ZONE 6: BATTERY =====================
@@ -942,12 +1191,184 @@ function updateBatteryChart(sessions) {
   });
 }
 
+// ===================== ZONE 6B: BATTERY DISTRIBUTION & SUMMARY =====================
+function updateBatteryDistribution(sessions) {
+  if (sessions.length === 0) return;
+  const batteryIncreases = sessions.map(s => s.battAfter - s.battBefore).filter(x => x >= 0);
+  const bins = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+  const distribution = Array(bins.length - 1).fill(0);
+
+  batteryIncreases.forEach(inc => {
+    for (let i = 0; i < bins.length - 1; i++) {
+      if (inc >= bins[i] && inc < bins[i+1]) {
+        distribution[i]++;
+        break;
+      }
+      if (i === bins.length - 2 && inc >= bins[i]) distribution[i]++;
+    }
+  });
+
+  // Trim trailing empty bins
+  let lastNonZero = distribution.length - 1;
+  while (lastNonZero > 0 && distribution[lastNonZero] === 0) lastNonZero--;
+  const trimmedDist = distribution.slice(0, lastNonZero + 1);
+  const labels = bins.slice(0, trimmedDist.length).map((b, i) => `${b}-${bins[i+1]}%`);
+
+  if (chartBatteryDistribution) chartBatteryDistribution.destroy();
+  chartBatteryDistribution = new Chart(document.getElementById('chartBatteryDistribution'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Number of Sessions',
+        data: trimmedDist,
+        backgroundColor: 'rgba(0,212,255,0.6)',
+        borderColor: 'rgba(0,212,255,0.9)',
+        borderWidth: 1,
+        borderRadius: 4,
+        categoryPercentage: 0.8,
+        barPercentage: 0.85
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: chartAnimOpts,
+      plugins: {
+        legend: legendOpts,
+        tooltip: {...tooltipOpts, callbacks: {label: ctx => `${ctx.parsed.y} sessions`}}
+      },
+      scales: {
+        x: {grid: {display: false}, ticks: {font: {family: "'Outfit'", size: 11}}},
+        y: {beginAtZero: true, title: {display: true, text: 'Sessions', font: {family: "'Outfit'", size: 11}}, ticks: {font: {family: "'JetBrains Mono'", size: 10}}, grid: {color: 'rgba(148,163,184,0.06)'}}
+      }
+    }
+  });
+}
+
+// ===================== ZONE 7C: ENERGY CONSUMPTION =====================
+function updateEnergyConsumptionChart(sessions) {
+  // Filter to sessions with valid energy consumption data
+  const valid = sessions.filter(s => s.energyBattPer100km !== null && s.energyBattPer100km !== undefined);
+  if (valid.length === 0) {
+    if (chartEnergyConsumption) chartEnergyConsumption.destroy();
+    return;
+  }
+
+  const labels = valid.map(s => s.startDate ? s.startDate.toLocaleDateString('en-GB', {day:'2-digit', month:'short'}) : '');
+
+  if (chartEnergyConsumption) chartEnergyConsumption.destroy();
+  chartEnergyConsumption = new Chart(document.getElementById('chartEnergyConsumption'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Battery %/100km',
+          data: valid.map(s => s.energyBattPer100km),
+          borderColor: '#00D4FF',
+          backgroundColor: 'rgba(0,212,255,0.1)',
+          fill: false,
+          tension: 0.3,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+          yAxisID: 'y'
+        },
+        {
+          label: 'kWh/100km',
+          data: valid.map(s => s.energyKwhPer100km),
+          borderColor: '#FFB020',
+          backgroundColor: 'rgba(255,176,32,0.1)',
+          fill: false,
+          tension: 0.3,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: chartAnimOpts,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: legendOpts,
+        tooltip: {
+          ...tooltipOpts,
+          callbacks: {
+            afterTitle: (items) => {
+              const idx = items[0].dataIndex;
+              const s = valid[idx];
+              return `${s.provider} — ${s.location}\n${fmtNumber(s.distToNext,0)} km between charges`;
+            },
+            label: ctx => {
+              if (ctx.dataset.yAxisID === 'y') return ` Battery: ${fmtNumber(ctx.parsed.y, 2)}%/100km`;
+              return ` Energy: ${fmtNumber(ctx.parsed.y, 2)} kWh/100km`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { grid: {display: false}, ticks: {font: {family: "'Outfit'", size: 10}, maxRotation: 60} },
+        y: {
+          beginAtZero: true,
+          position: 'left',
+          title: { display: true, text: 'Battery %/100km', font: {family: "'Outfit'", size: 11} },
+          ticks: { font: {family: "'JetBrains Mono'", size: 10} },
+          grid: { color: 'rgba(148,163,184,0.06)' }
+        },
+        y1: {
+          beginAtZero: true,
+          position: 'right',
+          title: { display: true, text: 'kWh/100km', font: {family: "'Outfit'", size: 11} },
+          ticks: { font: {family: "'JetBrains Mono'", size: 10} },
+          grid: { drawOnChartArea: false }
+        }
+      }
+    }
+  });
+}
+
+function updateBatterySummary(sessions) {
+  const container = document.getElementById('batterySummaryContainer');
+  if (!container || sessions.length === 0) return;
+  const increases = sessions.map(s => s.battAfter - s.battBefore);
+  const min = Math.min(...increases);
+  const max = Math.max(...increases);
+  const avg = increases.reduce((a,b) => a+b, 0) / increases.length;
+  const sorted = increases.sort((a,b) => a-b);
+  const median = sorted[Math.floor(sorted.length/2)];
+
+  const html = `
+    <div style="margin-bottom:12px">
+      <div style="font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Minimum Increase</div>
+      <div style="font-size:1.5rem;font-weight:600;font-family:'JetBrains Mono'">+${min.toFixed(1)}%</div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Average Increase</div>
+      <div style="font-size:1.5rem;font-weight:600;font-family:'JetBrains Mono'">+${avg.toFixed(1)}%</div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Median Increase</div>
+      <div style="font-size:1.5rem;font-weight:600;font-family:'JetBrains Mono'">+${median.toFixed(1)}%</div>
+    </div>
+    <div>
+      <div style="font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Maximum Increase</div>
+      <div style="font-size:1.5rem;font-weight:600;font-family:'JetBrains Mono'">+${max.toFixed(1)}%</div>
+    </div>
+  `;
+  container.innerHTML = html;
+}
+
 // ===================== ZONE 7: HEATMAP =====================
 function updateHeatmap(sessions) {
   const grid = Array.from({length:7},()=>Array(24).fill(0));
   sessions.forEach(s=>{if(!s.startDate)return;grid[s.startDate.getDay()][s.startDate.getHours()]++;});
-  const reordered = [grid[1],grid[2],grid[3],grid[4],grid[5],grid[6],grid[0]];
-  const dayLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const reordered = [grid[0],grid[1],grid[2],grid[3],grid[4],grid[5],grid[6]];
+  const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const maxVal = Math.max(...reordered.flat(),1);
   const container = document.getElementById('heatmapContainer');
   let html = `<div class="heatmap-grid" style="grid-template-columns:36px repeat(24,1fr) 32px;">`;
@@ -972,7 +1393,6 @@ function updateHeatmap(sessions) {
 }
 
 // ===================== ZONE 7: COMBINED EXPENSE BREAKDOWN BY CATEGORY =====================
-let chartCombinedExpenses;
 function updateCombinedExpensesCategoryChart(sessions, expenses) {
   const byCat = {};
 
@@ -1011,34 +1431,34 @@ function updateCombinedExpensesCategoryChart(sessions, expenses) {
     options: {
       responsive: true, maintainAspectRatio: false, animation: chartAnimOpts, cutout: '62%',
       plugins: {
-        legend: legendOpts,
+        legend: {display: true, position: 'bottom', labels: {font: {size: 11}, padding: 12}},
         tooltip: {
           ...tooltipOpts,
           callbacks: {
             label: ctx => {
               const d = byCat[ctx.label];
-              return [`$${d.total.toFixed(2)}`, `${d.count} transactions`, `${((d.total/totalSpend)*100).toFixed(1)}% of total`];
+              return [fmtCurrency(d.total, 2), `${d.count} transactions`, `${((d.total/totalSpend)*100).toFixed(1)}% of total`];
             }
           }
         }
       }
     },
-    plugins: [{
-      id: 'centerText',
-      afterDraw(chart) {
-        const {ctx, chartArea: {left, right, top, bottom}} = chart;
-        const cx = (left + right) / 2, cy = (top + bottom) / 2;
-        ctx.save();
-        ctx.font = "500 11px 'Outfit'";
-        ctx.fillStyle = '#64748B';
-        ctx.textAlign = 'center';
-        ctx.fillText('TOTAL SPEND', cx, cy - 10);
-        ctx.font = "600 20px 'JetBrains Mono'";
-        ctx.fillStyle = '#F1F5F9';
-        ctx.fillText('$' + totalSpend.toFixed(0), cx, cy + 14);
-        ctx.restore();
+    plugins: [
+      {
+        id: 'centerText',
+        afterDraw(chart) {
+          const {ctx, chartArea: {left, right, top, bottom}} = chart;
+          const cx = (left + right) / 2, cy = (top + bottom) / 2;
+          ctx.save();
+          ctx.font = "600 20px 'JetBrains Mono'";
+          ctx.fillStyle = document.body.classList.contains('light') ? '#0F172A' : '#F1F5F9';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(fmtCurrency(totalSpend, 0), cx, cy);
+          ctx.restore();
+        }
       }
-    }]
+    ]
   });
 }
 
@@ -1056,7 +1476,7 @@ function updateExpensesChart(expenses) {
       indexAxis:'y',responsive:true,maintainAspectRatio:false,animation:chartAnimOpts,
       plugins:{
         legend:{display:false},
-        tooltip:{...tooltipOpts,callbacks:{label:ctx=>[`$${ctx.parsed.x.toFixed(2)}`,`${byCat[ctx.label].count} transactions`]}}
+        tooltip:{...tooltipOpts,callbacks:{label:ctx=>[fmtCurrency(ctx.parsed.x,2),`${byCat[ctx.label].count} transactions`]}}
       },
       scales:{
         x:{title:{display:true,text:'SGD',font:{family:"'Outfit'",size:11}},grid:{color:'rgba(148,163,184,0.06)'},ticks:{font:{family:"'JetBrains Mono'",size:10}}},
@@ -1074,14 +1494,14 @@ const tableCols=[
   {key:'country',label:'Country',fmt:s=>s.country},
   {key:'provider',label:'Provider',fmt:s=>s.provider},
   {key:'type',label:'Type',fmt:s=>s.type},
-  {key:'kwh',label:'kWh',fmt:s=>s.kwh.toFixed(1)},
-  {key:'durationHours',label:'Duration (h)',fmt:s=>s.durationHours.toFixed(1)},
-  {key:'chargingSpeedKwhPerHour',label:'Speed (kWh/h)',fmt:s=>s.chargingSpeedKwhPerHour.toFixed(2)},
-  {key:'batteryIncreaseRatePerHour',label:'Battery %/h',fmt:s=>s.batteryIncreaseRatePerHour.toFixed(1)},
-  {key:'grossCost',label:'Cost',fmt:s=>'$'+s.grossCost.toFixed(2)},
-  {key:'rebate',label:'Rebate',fmt:s=>s.rebate>0?'$'+s.rebate.toFixed(2):'-'},
-  {key:'netCost',label:'Net Cost',fmt:s=>'$'+s.netCost.toFixed(2)},
-  {key:'costPerKwh',label:'$/kWh',fmt:s=>'$'+s.costPerKwh.toFixed(2)},
+  {key:'kwh',label:'kWh',fmt:s=>fmtNumber(s.kwh,1)},
+  {key:'durationHours',label:'Duration (h)',fmt:s=>fmtNumber(s.durationHours,1)},
+  {key:'chargingSpeedKwhPerHour',label:'Speed (kWh/h)',fmt:s=>fmtNumber(s.chargingSpeedKwhPerHour,2)},
+  {key:'batteryIncreaseRatePerHour',label:'Battery %/h',fmt:s=>fmtNumber(s.batteryIncreaseRatePerHour,1)},
+  {key:'grossCost',label:'Cost',fmt:s=>fmtCurrency(s.grossCost,2)},
+  {key:'rebate',label:'Rebate',fmt:s=>s.rebate>0?fmtCurrency(s.rebate,2):'-'},
+  {key:'netCost',label:'Net Cost',fmt:s=>fmtCurrency(s.netCost,2)},
+  {key:'costPerKwh',label:'$/kWh',fmt:s=>fmtCurrency(s.costPerKwh,4)},
   {key:'battery',label:'Battery',fmt:s=>`${s.battBefore}%\u2192${s.battAfter}%`}
 ];
 let tableSortCol='date',tableSortAsc=true,tablePage=0,tableFilteredData=[];
@@ -1162,11 +1582,15 @@ function updateAll(){
   const f=getFilters();updateFilterBadge(f);
   const sessions=filterSessions(f),expenses=filterExpenses(f);
   updateKPIs(sessions,expenses,f);
-  updateCostTimeChart(sessions,expenses);
+  updateSpendByMonthChart(sessions);
+  updateDistanceByMonthChart(sessions);
+  updateProviderLocationTable(sessions);
   updateProviderDonut(sessions);
-  updateTypeDonut(sessions);
-  updateScatter(sessions);
+  updateSessionsByProviderDonut(sessions);
   updateBatteryChart(sessions);
+  updateBatteryDistribution(sessions);
+  updateBatterySummary(sessions);
+  updateEnergyConsumptionChart(sessions);
   updateHeatmap(sessions);
   updateCombinedExpensesCategoryChart(sessions,expenses);
   updateTable(sessions);
@@ -1183,7 +1607,6 @@ document.getElementById('filterMonth').addEventListener('change',()=>{crossFilte
     });
   });
 });
-document.getElementById('providerList').addEventListener('change',()=>{crossFilterProvider=null;crossFilterType=null;updateAll();});
 document.getElementById('tableSearch').addEventListener('input',renderTable);
 document.getElementById('tablePageSize').addEventListener('change',()=>{tablePage=0;renderTable();});
 
@@ -1254,7 +1677,7 @@ function applyChartTheme() {
   Chart.defaults.color = light ? '#475569' : '#94A3B8';
   Chart.defaults.borderColor = light ? 'rgba(100,116,139,0.15)' : 'rgba(148,163,184,0.08)';
   // Redraw all charts with new defaults
-  [chartCostTime, chartProvider, chartTypeDonut, chartEfficiency, chartBattery, chartExpenses, chartCombinedExpenses].forEach(chart => {
+  [chartSpendByMonth, chartDistanceByMonth, chartProvider, chartSessionsByProvider, chartBattery, chartBatteryDistribution, chartExpenses, chartCombinedExpenses, chartEnergyConsumption].forEach(chart => {
     if (chart && chart.update) chart.update();
   });
 }
