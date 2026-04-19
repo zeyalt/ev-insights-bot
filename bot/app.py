@@ -2,12 +2,12 @@ import os
 import logging
 import io
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pandas as pd
 import requests
 from flask import Flask, send_file, jsonify
-from telegram import Update, BotCommand
+from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -82,7 +82,7 @@ def fetch_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     charging["rebate"] = charging["rebate_raw"].where(~is_myr, charging["rebate_raw"] * MYR_TO_SGD)
     charging["idle_fees"] = charging["idle_fees_raw"].where(~is_myr, charging["idle_fees_raw"] * MYR_TO_SGD)
     charging["net_cost"] = charging["gross_cost"] - charging["rebate"]
-    charging["cost_per_kwh"] = charging["net_cost"] / charging["kwh"].replace(0, float("nan"))
+    charging["cost_per_kwh"] = charging["gross_cost"] / charging["kwh"].replace(0, float("nan"))
 
     charging["duration_min"] = (charging["end"] - charging["start"]).dt.total_seconds() / 60
     charging["duration_hours"] = charging["duration_min"] / 60
@@ -114,6 +114,29 @@ def month_filter(df, period):
     return df[df["month"] == period]
 
 
+def compute_energy_consumption(charging):
+    """Compute avg kWh/100km from consecutive sessions, excluding outliers via IQR."""
+    sorted_c = charging.sort_values("start").reset_index(drop=True)
+    values = []
+    for i in range(len(sorted_c) - 1):
+        cur = sorted_c.iloc[i]
+        nxt = sorted_c.iloc[i + 1]
+        dist = nxt["distance"]
+        batt_increase = cur["batt_after"] - cur["batt_before"]
+        batt_drop = cur["batt_after"] - nxt["batt_before"]
+        if dist > 0 and batt_increase > 0 and batt_drop >= 0:
+            kwh_per_pct = cur["kwh"] / batt_increase
+            kwh_consumed = kwh_per_pct * batt_drop
+            values.append(kwh_consumed / dist * 100)
+    if not values:
+        return None
+    s = pd.Series(values)
+    q1, q3 = s.quantile(0.25), s.quantile(0.75)
+    iqr = q3 - q1
+    filtered = s[(s >= q1 - 1.5 * iqr) & (s <= q3 + 1.5 * iqr)]
+    return filtered.mean() if len(filtered) > 0 else s.mean()
+
+
 def build_insights(charging, expenses, period=None, prev_period=None):
     """Build a formatted insights message. If period is None, uses current month."""
     now = datetime.now()
@@ -125,70 +148,84 @@ def build_insights(charging, expenses, period=None, prev_period=None):
     cur_c = month_filter(charging, period)
     prev_c = month_filter(charging, prev_period)
     cur_e = month_filter(expenses, period)
-    prev_e = month_filter(expenses, prev_period)
 
-    # --- Expense distribution by category (combined: EV Charging + Other) ---
+    # --- Expense distribution for the selected month ---
     by_category = {}
 
-    # Add EV Charging as a category
-    ev_charging_cost = charging["net_cost"].sum() + charging["idle_fees"].sum()
-    if ev_charging_cost > 0:
-        by_category["EV Charging"] = ev_charging_cost
+    # EV Charging uses gross cost for the month
+    ev_gross = cur_c["gross_cost"].sum()
+    if ev_gross > 0:
+        by_category["EV Charging"] = ev_gross
 
-    # Add other expense categories
-    other_by_cat = expenses.groupby("Expense Category")["amount"].sum()
-    for cat, amt in other_by_cat.items():
-        by_category[cat] = by_category.get(cat, 0) + amt
+    # Other expense categories for the month
+    if len(cur_e) > 0:
+        other_by_cat = cur_e.groupby("Expense Category")["amount"].sum()
+        for cat, amt in other_by_cat.items():
+            by_category[cat] = by_category.get(cat, 0) + amt
 
-    # Sort by amount descending
     sorted_cats = sorted(by_category.items(), key=lambda x: x[1], reverse=True)
+    total_month_expense = sum(amt for _, amt in sorted_cats)
     expense_lines = []
     for cat, amt in sorted_cats:
-        expense_lines.append(f"  {cat}: ${amt:,.2f}")
+        pct = (amt / total_month_expense * 100) if total_month_expense > 0 else 0
+        expense_lines.append(f"  {cat}: ${amt:,.2f} ({pct:.0f}%)")
 
-    # --- MTD gross charging ---
+    # --- Gross Charging Spend MoM ---
     mtd_gross = cur_c["gross_cost"].sum()
     prev_gross = prev_c["gross_cost"].sum()
 
-    # --- kWh MTD & MoM ---
+    # --- kWh MoM ---
     mtd_kwh = cur_c["kwh"].sum()
     prev_kwh = prev_c["kwh"].sum()
 
-    # --- Efficiency: best providers & locations ---
-    if len(charging) > 0:
-        eff_provider = (
-            charging.groupby("Charging Provider")
-            .agg(avg_cpk=("cost_per_kwh", "mean"), sessions=("kwh", "count"), total_kwh=("kwh", "sum"))
-            .sort_values("avg_cpk")
-        )
-        top_providers = eff_provider.head(3)
+    period_label = period.strftime("%b %Y")
+    prev_label = prev_period.strftime("%b %Y")
 
+    def delta_str(cur_val, prev_val, unit="", lower_better=False):
+        if prev_val == 0:
+            return "N/A (no prev data)"
+        pct = ((cur_val - prev_val) / abs(prev_val)) * 100
+        arrow = "\U0001F53C" if pct > 0 else "\U0001F53D" if pct < 0 else "\u27A1\uFE0F"
+        good = (pct <= 0) if lower_better else (pct >= 0)
+        indicator = "\u2705" if good else "\u26A0\uFE0F"
+        return f"${cur_val:,.2f}{unit} ({arrow} {abs(pct):.0f}% vs {prev_label}) {indicator}"
+
+    # --- Top 5 Cost-Efficient Locations (by avg gross $/kWh) ---
+    if len(charging) > 0:
         eff_location = (
             charging.groupby("Charging Location")
             .agg(avg_cpk=("cost_per_kwh", "mean"), sessions=("kwh", "count"), total_kwh=("kwh", "sum"))
             .query("sessions >= 2")
             .sort_values("avg_cpk")
         )
-        top_locations = eff_location.head(5)
+        top_cost_locations = eff_location.head(5)
     else:
-        top_providers = pd.DataFrame()
-        top_locations = pd.DataFrame()
+        top_cost_locations = pd.DataFrame()
+
+    # --- Top 5 Time-Efficient Locations (by avg kWh/hour) ---
+    if len(charging) > 0:
+        speed_location = (
+            charging.groupby("Charging Location")
+            .agg(avg_speed=("charging_speed_kwh_per_hour", "mean"), sessions=("kwh", "count"))
+            .query("sessions >= 2")
+            .sort_values("avg_speed", ascending=False)
+        )
+        top_speed_locations = speed_location.head(5)
+    else:
+        top_speed_locations = pd.DataFrame()
 
     # --- Extra insights ---
     total_dist = charging["distance"].sum()
-    total_kwh_all = charging["kwh"].sum()
-    efficiency_km_per_kwh = total_dist / total_kwh_all if total_kwh_all > 0 else 0
 
-    avg_charge_pct = (charging["batt_after"] - charging["batt_before"]).mean() if len(charging) > 0 else 0
-    deep_discharge = charging[charging["batt_before"] <= 25]
-    high_charge = charging[charging["batt_after"] >= 90]
-
-    # Charging speed metrics
+    # Charging speed & duration
     avg_charging_speed = charging["charging_speed_kwh_per_hour"].mean() if len(charging) > 0 else 0
     avg_battery_rate = charging["battery_increase_pct_per_hour"].mean() if len(charging) > 0 else 0
     avg_duration_hours = charging["duration_hours"].mean() if len(charging) > 0 else 0
 
-    # Most used location
+    # Energy consumption (kWh/100km, outliers removed)
+    avg_energy = compute_energy_consumption(charging)
+
+    # Most used locations
     top_loc = charging["Charging Location"].value_counts().head(3) if len(charging) > 0 else pd.Series()
 
     # Subscription savings
@@ -197,52 +234,49 @@ def build_insights(charging, expenses, period=None, prev_period=None):
     sub_avg = sub_sessions["cost_per_kwh"].mean() if len(sub_sessions) > 0 else 0
     non_sub_avg = non_sub["cost_per_kwh"].mean() if len(non_sub) > 0 else 0
 
-    def delta_str(cur, prev, unit="", lower_better=False):
-        if prev == 0:
-            return "N/A (no prev data)"
-        pct = ((cur - prev) / abs(prev)) * 100
-        arrow = "\U0001F53C" if pct > 0 else "\U0001F53D" if pct < 0 else "\u27A1\uFE0F"
-        good = (pct <= 0) if lower_better else (pct >= 0)
-        indicator = "\u2705" if good else "\u26A0\uFE0F"
-        return f"{cur:,.2f}{unit} ({arrow} {abs(pct):.0f}% vs prev month) {indicator}"
-
-    period_label = period.strftime("%b %Y")
-    prev_label = prev_period.strftime("%b %Y")
-
     msg = f"""
 \U0001F50B *EV Insights \u2014 {period_label}*
 
-\U0001F4B0 *Expense Distribution (All-Time)*
-{chr(10).join(expense_lines)}
+\U0001F4B0 *Expense Distribution ({period_label})*
+{chr(10).join(expense_lines) if expense_lines else '  No expenses recorded'}
 
 \u26FD *Gross Charging Spend*
-  MTD: ${mtd_gross:,.2f}
-  MoM: {delta_str(mtd_gross, prev_gross, lower_better=True)}
+  {delta_str(mtd_gross, prev_gross, lower_better=True)}
 
-\u26A1 *Energy Consumption (kWh)*
-  MTD: {mtd_kwh:,.1f} kWh
-  MoM: {delta_str(mtd_kwh, prev_kwh, ' kWh')}
+\u26A1 *Energy Charged (kWh)*
+  MTD: {mtd_kwh:,.1f} kWh"""
 
-\U0001F3C6 *Most Efficient Providers (avg $/kWh)*"""
+    if prev_kwh > 0:
+        kwh_pct = ((mtd_kwh - prev_kwh) / abs(prev_kwh)) * 100
+        kwh_arrow = "\U0001F53C" if kwh_pct > 0 else "\U0001F53D" if kwh_pct < 0 else "\u27A1\uFE0F"
+        msg += f"\n  MoM: {kwh_arrow} {abs(kwh_pct):.0f}% vs {prev_label}"
+    else:
+        msg += "\n  MoM: N/A (no prev data)"
 
-    for prov, row in top_providers.iterrows():
-        msg += f"\n  {prov}: ${row['avg_cpk']:.3f}/kWh ({int(row['sessions'])} sessions)"
+    msg += "\n\n\U0001F4CD *Top 5 Cost-Efficient EV Charging Locations (avg $/kWh)*"
+    if len(top_cost_locations) > 0:
+        for loc, row in top_cost_locations.iterrows():
+            msg += f"\n  {loc}: ${row['avg_cpk']:.4f}/kWh ({int(row['sessions'])} sessions)"
+    else:
+        msg += "\n  Not enough data"
 
-    msg += "\n\n\U0001F4CD *Most Efficient Locations (avg $/kWh, \u22652 sessions)*"
-    for loc, row in top_locations.iterrows():
-        msg += f"\n  {loc}: ${row['avg_cpk']:.3f}/kWh ({int(row['sessions'])} sessions)"
+    msg += "\n\n\u26A1 *Top 5 Time-Efficient EV Charging Locations (avg kWh/h)*"
+    if len(top_speed_locations) > 0:
+        for loc, row in top_speed_locations.iterrows():
+            msg += f"\n  {loc}: {row['avg_speed']:.2f} kWh/h ({int(row['sessions'])} sessions)"
+    else:
+        msg += "\n  Not enough data"
 
     msg += f"""
 
 \U0001F4CA *Extra Insights*
   \U0001F698 Est. total distance: {total_dist:,.0f} km
-  \u26A1 Avg efficiency: {efficiency_km_per_kwh:.1f} km/kWh
-  \U0001F50B Avg charge gain per session: {avg_charge_pct:.0f}%
   \u231A Avg charging duration: {avg_duration_hours:.1f} hours
-  \U0001F4A1 Avg charging speed: {avg_charging_speed:.1f} kWh/hour
-  \U0001F4CB Avg battery increase rate: {avg_battery_rate:.1f}%/hour
-  \U0001F7E2 Sessions starting \u226425%: {len(deep_discharge)} ({len(deep_discharge)/len(charging)*100:.0f}% of total)
-  \U0001F534 Sessions charging to \u226590%: {len(high_charge)} ({len(high_charge)/len(charging)*100:.0f}% of total)"""
+  \U0001F4A1 Avg charging speed: {avg_charging_speed:.1f} kWh/h
+  \U0001F4CB Avg battery increase rate: {avg_battery_rate:.1f}%/h"""
+
+    if avg_energy is not None:
+        msg += f"\n  \U0001F50B Avg energy consumption: {avg_energy:.1f} kWh/100km"
 
     if len(top_loc) > 0:
         msg += "\n  \U0001F3E0 Top charging spots:"
@@ -251,11 +285,7 @@ def build_insights(charging, expenses, period=None, prev_period=None):
 
     if sub_avg > 0 and non_sub_avg > 0:
         saving_pct = ((non_sub_avg - sub_avg) / non_sub_avg) * 100
-        msg += f"\n  \U0001F4B3 Subscription vs pay-as-you-go: ${sub_avg:.3f} vs ${non_sub_avg:.3f}/kWh ({saving_pct:.0f}% saving)"
-
-    idle_total = charging["idle_fees"].sum()
-    if idle_total > 0:
-        msg += f"\n  \u23F0 Total idle fees paid: ${idle_total:.2f}"
+        msg += f"\n  \U0001F4B3 Subscription vs pay-as-you-go: ${sub_avg:.4f} vs ${non_sub_avg:.4f}/kWh ({saving_pct:.0f}% saving)"
 
     return msg
 
@@ -292,38 +322,38 @@ async def cmd_insights(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def cmd_alltime(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         charging, expenses = fetch_data()
-        total_net = charging["net_cost"].sum()
+        total_gross = charging["gross_cost"].sum()
         total_idle = charging["idle_fees"].sum()
         total_exp = expenses["amount"].sum()
         total_kwh = charging["kwh"].sum()
         total_dist = charging["distance"].sum()
         n = len(charging)
-        avg_cpk = total_net / total_kwh if total_kwh > 0 else 0
+        avg_cpk = total_gross / total_kwh if total_kwh > 0 else 0
 
         by_month_c = charging.groupby("month").agg(
-            net=("net_cost", "sum"), kwh=("kwh", "sum"), sessions=("kwh", "count")
+            gross=("gross_cost", "sum"), kwh=("kwh", "sum"), sessions=("kwh", "count")
         )
         by_month_e = expenses.groupby("month")["amount"].sum()
 
         month_lines = []
         for m in sorted(set(list(by_month_c.index) + list(by_month_e.index))):
-            c = by_month_c.loc[m] if m in by_month_c.index else pd.Series({"net": 0, "kwh": 0, "sessions": 0})
+            c = by_month_c.loc[m] if m in by_month_c.index else pd.Series({"gross": 0, "kwh": 0, "sessions": 0})
             e = by_month_e.get(m, 0)
             month_lines.append(
-                f"  {m}: ${c['net']+e:,.0f} ({int(c.get('sessions',0))} sessions, {c['kwh']:,.0f} kWh)"
+                f"  {m}: ${c['gross']+e:,.0f} ({int(c.get('sessions',0))} sessions, {c['kwh']:,.0f} kWh)"
             )
 
         msg = f"""\U0001F4CA *All-Time EV Summary*
 
-\U0001F4B0 Total spend: ${total_net + total_idle + total_exp:,.2f}
-  Charging (net): ${total_net:,.2f}
+\U0001F4B0 Total spend: ${total_gross + total_idle + total_exp:,.2f}
+  Charging (gross): ${total_gross:,.2f}
   Idle fees: ${total_idle:,.2f}
   Other expenses: ${total_exp:,.2f}
 
 \u26A1 Total kWh: {total_kwh:,.1f}
 \U0001F698 Est. distance: {total_dist:,.0f} km
 \U0001F50B Sessions: {n}
-\U0001F4B5 Avg cost/kWh: ${avg_cpk:.3f}
+\U0001F4B5 Avg cost/kWh: ${avg_cpk:.4f}
 
 \U0001F4C5 *Monthly Breakdown*
 {chr(10).join(month_lines)}"""
