@@ -1,6 +1,6 @@
 # EV Insights Bot
 
-A personal EV charging analytics platform that tracks charging sessions, costs, and energy consumption for an electric vehicle.
+A personal EV charging analytics platform that tracks charging sessions, costs, and energy consumption for my electric vehicle.
 
 ## Features
 

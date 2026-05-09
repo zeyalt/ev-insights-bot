@@ -178,6 +178,12 @@ def build_insights(charging, expenses, period=None, prev_period=None):
     mtd_kwh = cur_c["kwh"].sum()
     prev_kwh = prev_c["kwh"].sum()
 
+    # --- Hours MoM ---
+    mtd_hours = cur_c["duration_hours"].sum()
+    prev_hours = prev_c["duration_hours"].sum()
+    mtd_dist = cur_c["distance"].sum()
+    avg_hours_per_100km = (mtd_hours / mtd_dist * 100) if mtd_dist > 0 else None
+
     period_label = period.strftime("%b %Y")
     prev_label = prev_period.strftime("%b %Y")
 
@@ -252,6 +258,16 @@ def build_insights(charging, expenses, period=None, prev_period=None):
         msg += f"\n  MoM: {kwh_arrow} {abs(kwh_pct):.0f}% vs {prev_label}"
     else:
         msg += "\n  MoM: N/A (no prev data)"
+
+    msg += f"\n\n\u23F1\uFE0F *Hours Charged*\n  MTD: {mtd_hours:,.1f} hrs"
+    if prev_hours > 0:
+        hrs_pct = ((mtd_hours - prev_hours) / abs(prev_hours)) * 100
+        hrs_arrow = "\U0001F53C" if hrs_pct > 0 else "\U0001F53D" if hrs_pct < 0 else "\u27A1\uFE0F"
+        msg += f"\n  MoM: {hrs_arrow} {abs(hrs_pct):.0f}% vs {prev_label}"
+    else:
+        msg += "\n  MoM: N/A (no prev data)"
+    if avg_hours_per_100km is not None:
+        msg += f"\n  Avg hours charged/100km: {avg_hours_per_100km:.2f} hrs"
 
     msg += "\n\n\U0001F4CD *Top 5 Cost-Efficient EV Charging Locations (avg $/kWh)*"
     if len(top_cost_locations) > 0:
